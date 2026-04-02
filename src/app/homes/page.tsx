@@ -1,6 +1,4 @@
 "use client";
-// Main Homes screen — dashboard stats + card/list toggle
-// House managers and admins land here first
 import { useEffect, useState } from "react";
 import HomeCard from "@/components/homes/HomeCard";
 import HomeListRow from "@/components/homes/HomeListRow";
@@ -14,14 +12,13 @@ type Home = {
   name: string;
   address: string | null;
   bed_count: number;
+  house_manager_name: string | null;
   residents: { id: string; flag: string }[];
 };
 
-type ViewMode = "card" | "list";
-
 export default function HomesPage() {
   const [homes, setHomes] = useState<Home[]>([]);
-  const [view, setView] = useState<ViewMode>("card");
+  const [view, setView] = useState<"card" | "list">("card");
   const [loading, setLoading] = useState(true);
 
   async function loadHomes() {
@@ -34,139 +31,112 @@ export default function HomesPage() {
     setLoading(false);
   }
 
-  useEffect(() => {
-    loadHomes();
-  }, []);
+  useEffect(() => { loadHomes(); }, []);
 
-  // Calculate program-wide stats
-  const totalResidents = homes.reduce((sum, h) => sum + h.residents.length, 0);
-  const totalBeds = homes.reduce((sum, h) => sum + (h.bed_count || 0), 0);
-  const totalVacancies = homes.reduce((sum, h) => sum + Math.max(0, (h.bed_count || 0) - h.residents.length), 0);
-  const totalFlagged = homes.reduce((sum, h) => sum + h.residents.filter(r => r.flag === "Red").length, 0);
+  const totalResidents = homes.reduce((s, h) => s + h.residents.length, 0);
+  const totalBeds = homes.reduce((s, h) => s + (h.bed_count || 0), 0);
+  const totalVacancies = homes.reduce((s, h) => s + Math.max(0, (h.bed_count || 0) - h.residents.length), 0);
+  const totalFlagged = homes.reduce((s, h) => s + h.residents.filter(r => r.flag === "Red").length, 0);
 
   const stats = [
-    { label: "Homes", value: homes.length, icon: Building2, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Residents", value: totalResidents, icon: Users, color: "text-slate-700", bg: "bg-slate-50" },
-    { label: "Vacancies", value: totalVacancies, icon: DoorOpen, color: "text-green-600", bg: "bg-green-50" },
-    { label: "Flagged", value: totalFlagged, icon: AlertTriangle, color: totalFlagged > 0 ? "text-red-600" : "text-gray-400", bg: totalFlagged > 0 ? "bg-red-50" : "bg-gray-50" },
+    { label: "Total Homes", value: homes.length, icon: Building2, color: "#0284C7", bg: "#E8F4FD" },
+    { label: "Residents", value: totalResidents, icon: Users, color: "#0B1F3A", bg: "#EEF2F7" },
+    { label: "Open Beds", value: totalVacancies, icon: DoorOpen, color: "#16A34A", bg: "#DCFCE7" },
+    { label: "Need Attention", value: totalFlagged, icon: AlertTriangle, color: totalFlagged > 0 ? "#DC2626" : "#94A3B8", bg: totalFlagged > 0 ? "#FEE2E2" : "#F1F5F9" },
   ];
 
-  if (loading) {
-    return (
-      <div className="max-w-5xl mx-auto">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-          {[1,2,3,4].map(i => (
-            <div key={i} className="bg-white border border-gray-200 rounded-2xl p-4 animate-pulse">
-              <div className="h-8 w-8 bg-gray-100 rounded-xl mb-3" />
-              <div className="h-6 w-10 bg-gray-100 rounded mb-1" />
-              <div className="h-3 w-16 bg-gray-100 rounded" />
-            </div>
-          ))}
-        </div>
+  if (loading) return (
+    <div className="max-w-5xl mx-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8 mt-2">
+        {[1,2,3,4].map(i => (
+          <div key={i} className="bg-white border border-gray-100 rounded-2xl p-4 animate-pulse h-24" />
+        ))}
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Page header */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
-          <p className="text-gray-500 text-sm mt-0.5">
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#0B1F3A" }}>Dashboard</h1>
+          <p className="text-sm mt-0.5" style={{ color: "#64748B" }}>
             {homes.length} home{homes.length !== 1 ? "s" : ""} in your program
           </p>
         </div>
         <AddHomeDialog onAdded={loadHomes} />
       </div>
 
-      {/* Program-wide stats */}
+      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
         {stats.map(({ label, value, icon: Icon, color, bg }) => (
-          <div key={label} className="bg-white border border-gray-200 rounded-2xl p-4">
-            <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center mb-3", bg)}>
-              <Icon size={18} className={color} strokeWidth={2} />
+          <div key={label} className="bg-white border rounded-2xl p-4" style={{ borderColor: "#DDE4ED" }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: bg }}>
+              <Icon size={18} style={{ color }} strokeWidth={2} />
             </div>
-            <p className="text-2xl font-bold text-slate-900 leading-none">{value}</p>
-            <p className="text-xs text-gray-500 font-medium mt-1">{label}</p>
+            <p className="text-2xl font-bold leading-none" style={{ color: "#0B1F3A" }}>{value}</p>
+            <p className="text-xs font-medium mt-1" style={{ color: "#64748B" }}>{label}</p>
           </div>
         ))}
       </div>
 
-      {/* Homes section header with view toggle */}
+      {/* Section header + toggle */}
       {homes.length > 0 && (
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">All Homes</h2>
-          {/* Card / List toggle */}
-          <div className="flex items-center bg-gray-100 rounded-lg p-0.5 gap-0.5">
-            <button
-              onClick={() => setView("card")}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-150",
-                view === "card"
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-gray-500 hover:text-slate-700"
-              )}
-            >
-              <LayoutGrid size={13} />
-              Cards
-            </button>
-            <button
-              onClick={() => setView("list")}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-150",
-                view === "list"
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-gray-500 hover:text-slate-700"
-              )}
-            >
-              <List size={13} />
-              List
-            </button>
+          <h2 className="text-xs font-bold uppercase tracking-widest" style={{ color: "#94A3B8" }}>All Homes</h2>
+          <div className="flex items-center rounded-lg p-0.5 gap-0.5" style={{ background: "#EEF2F7" }}>
+            {(["card", "list"] as const).map(v => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all duration-150",
+                )}
+                style={view === v
+                  ? { background: "white", color: "#0B1F3A", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }
+                  : { color: "#94A3B8" }
+                }
+              >
+                {v === "card" ? <LayoutGrid size={13} /> : <List size={13} />}
+                {v === "card" ? "Cards" : "List"}
+              </button>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Homes display */}
+      {/* Homes */}
       {homes.length > 0 ? (
         view === "card" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {homes.map(home => (
-              <HomeCard
-                key={home.id}
-                id={home.id}
-                name={home.name}
-                address={home.address}
-                residentCount={home.residents.length}
-                flaggedCount={home.residents.filter(r => r.flag === "Red").length}
-                bedCount={home.bed_count}
-              />
+            {homes.map(h => (
+              <HomeCard key={h.id} id={h.id} name={h.name} address={h.address}
+                houseManagerName={h.house_manager_name}
+                residentCount={h.residents.length}
+                flaggedCount={h.residents.filter(r => r.flag === "Red").length}
+                bedCount={h.bed_count} />
             ))}
           </div>
         ) : (
           <div className="space-y-2">
-            {homes.map(home => (
-              <HomeListRow
-                key={home.id}
-                id={home.id}
-                name={home.name}
-                address={home.address}
-                residentCount={home.residents.length}
-                flaggedCount={home.residents.filter(r => r.flag === "Red").length}
-                bedCount={home.bed_count}
-              />
+            {homes.map(h => (
+              <HomeListRow key={h.id} id={h.id} name={h.name} address={h.address}
+                houseManagerName={h.house_manager_name}
+                residentCount={h.residents.length}
+                flaggedCount={h.residents.filter(r => r.flag === "Red").length}
+                bedCount={h.bed_count} />
             ))}
           </div>
         )
       ) : (
-        // Empty state
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-16 h-16 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-center mb-4">
-            <Building2 size={28} className="text-amber-500" />
+        <div className="flex flex-col items-center justify-center py-24 text-center bg-white border rounded-2xl" style={{ borderColor: "#DDE4ED" }}>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: "#E8F4FD" }}>
+            <Building2 size={28} style={{ color: "#0284C7" }} />
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-1">No homes yet</h3>
-          <p className="text-gray-500 text-sm mb-6 max-w-xs">
-            Add your first home to start managing residents and tracking your program.
+          <h3 className="text-lg font-bold mb-1" style={{ color: "#0B1F3A" }}>No homes yet</h3>
+          <p className="text-sm mb-6 max-w-xs" style={{ color: "#64748B" }}>
+            Add your first home to start managing residents.
           </p>
           <AddHomeDialog onAdded={loadHomes} />
         </div>

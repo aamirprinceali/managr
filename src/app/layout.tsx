@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/components/layout/AppShell";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -16,8 +16,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${dmSans.variable} h-full antialiased`}>
-      <body className="min-h-full bg-background font-sans">
+    <html lang="en" className={`${jakarta.variable} h-full antialiased`}>
+      <body className="min-h-full bg-background" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <AppShell>{children}</AppShell>
       </body>
     </html>
