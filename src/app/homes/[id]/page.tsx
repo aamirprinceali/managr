@@ -1,44 +1,105 @@
+"use client";
 // Home Dashboard — shows everything about one specific home and its residents
 // Red-flagged residents always appear at the top so managers see issues immediately
-import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+// Converted to a client component so AddResidentDialog can trigger a data refresh via onAdded
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import ResidentRow from "@/components/residents/ResidentRow";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Users, Plus, BedDouble } from "lucide-react";
+import AddResidentDialog from "@/components/residents/AddResidentDialog";
+import { ArrowLeft, Users, BedDouble } from "lucide-react";
 import Link from "next/link";
 
-type Params = Promise<{ id: string }>;
+// Types for the data we fetch from Supabase
+type Home = {
+  id: string;
+  name: string;
+  address: string | null;
+  bed_count: number;
+};
 
-export default async function HomeDashboard({ params }: { params: Params }) {
-  const { id } = await params;
-  const supabase = await createClient();
+type Resident = {
+  id: string;
+  full_name: string;
+  status: string;
+  flag: string;
+  points: number;
+  sobriety_date: string | null;
+  is_archived: boolean;
+};
 
-  // Fetch the home details
-  const { data: home } = await supabase
-    .from("homes")
-    .select("*")
-    .eq("id", id)
-    .single();
+export default function HomeDashboard() {
+  const params = useParams();
+  const router = useRouter();
+  const id = params.id as string;
 
-  if (!home) notFound();
+  const [home, setHome] = useState<Home | null>(null);
+  const [residents, setResidents] = useState<Resident[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch all active (non-archived) residents for this home
-  const { data: residents } = await supabase
-    .from("residents")
-    .select("*")
-    .eq("home_id", id)
-    .eq("is_archived", false);
+  // Fetch home + residents from Supabase (client-side)
+  async function loadData() {
+    const supabase = createClient();
+
+    // Fetch home details
+    const { data: homeData } = await supabase
+      .from("homes")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (!homeData) {
+      router.push("/404");
+      return;
+    }
+
+    setHome(homeData);
+
+    // Fetch all active (non-archived) residents for this home
+    const { data: residentData } = await supabase
+      .from("residents")
+      .select("*")
+      .eq("home_id", id)
+      .eq("is_archived", false);
+
+    setResidents(residentData ?? []);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   // Sort residents: Red flagged first, then Yellow, then Green
   const flagOrder: Record<string, number> = { Red: 0, Yellow: 1, Green: 2 };
-  const sorted = (residents ?? []).sort(
+  const sorted = [...residents].sort(
     (a, b) => (flagOrder[a.flag] ?? 3) - (flagOrder[b.flag] ?? 3)
   );
 
-  // Calculate quick stats shown at the top
-  const activeCount = sorted.filter(r => r.status === "Active").length;
-  const onPassCount = sorted.filter(r => r.status === "On Pass").length;
-  const flaggedCount = sorted.filter(r => r.flag === "Red").length;
+  // Quick stats shown at the top of the dashboard
+  const activeCount = sorted.filter((r) => r.status === "Active").length;
+  const onPassCount = sorted.filter((r) => r.status === "On Pass").length;
+  const flaggedCount = sorted.filter((r) => r.flag === "Red").length;
+
+  // Loading skeleton
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto animate-pulse">
+        <div className="h-4 w-24 bg-gray-200 rounded mb-6" />
+        <div className="h-8 w-48 bg-gray-200 rounded mb-2" />
+        <div className="h-4 w-36 bg-gray-100 rounded mb-8" />
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white border border-gray-200 rounded-xl h-20" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!home) return null;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -85,22 +146,20 @@ export default async function HomeDashboard({ params }: { params: Params }) {
         </div>
       )}
 
-      {/* Residents section */}
+      {/* Residents section header + Add Resident button */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
           <Users size={20} />
           Residents
         </h2>
-        <Button size="sm" className="gap-2 bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold">
-          <Plus size={16} />
-          Add Resident
-        </Button>
+        {/* AddResidentDialog — onAdded triggers a full data reload */}
+        <AddResidentDialog homeId={home.id} onAdded={loadData} />
       </div>
 
       {/* Resident list — sorted Red → Yellow → Green */}
       {sorted.length > 0 ? (
         <div className="space-y-2">
-          {sorted.map(r => (
+          {sorted.map((r) => (
             <ResidentRow
               key={r.id}
               id={r.id}
@@ -114,17 +173,14 @@ export default async function HomeDashboard({ params }: { params: Params }) {
           ))}
         </div>
       ) : (
-        // Empty state
+        // Empty state — shown when no residents exist yet
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
             <Users size={28} className="text-gray-400" />
           </div>
           <p className="text-slate-900 font-semibold mb-1">No residents yet</p>
           <p className="text-gray-500 text-sm mb-5">Add the first resident to this home.</p>
-          <Button className="gap-2 bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold">
-            <Plus size={16} />
-            Add Resident
-          </Button>
+          <AddResidentDialog homeId={home.id} onAdded={loadData} />
         </div>
       )}
     </div>
