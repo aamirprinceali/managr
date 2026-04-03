@@ -2,12 +2,11 @@
 
 ## What This App Is
 Managr is a sober living / recovery housing operations app built for house managers and facility owners.
-It was built as a gift for a friend who runs a sober living facility, with the long-term goal of
-turning it into a product sold to treatment centers, sober livings, and detox facilities.
+Built as a gift for a friend (Mike) who runs a sober living facility. Long-term goal: sell to other treatment centers, sober livings, and detox facilities.
 
 **App name:** Managr
-**Owner/first client:** Mike (friend, owns a sober living)
-**Business goal:** Give to Mike free, let word of mouth spread to other facilities, then charge others
+**Owner/first client:** Mike (friend, owns a sober living called Lighthouse)
+**Business goal:** Give to Mike free, let word of mouth spread, then charge other facilities
 
 ---
 
@@ -15,143 +14,188 @@ turning it into a product sold to treatment centers, sober livings, and detox fa
 
 ### Phase 1 — Web App (current)
 - **Framework:** Next.js 14 (App Router)
-- **Styling:** Tailwind CSS + shadcn/ui
-- **Database:** Supabase (PostgreSQL)
-- **Auth:** Supabase Auth (role-based: Admin, Manager, Viewer)
-- **File storage:** Supabase Storage (for documents)
-- **Deployment:** Vercel
+- **Styling:** Tailwind CSS v4 + shadcn/ui (Base UI version — NOT Radix)
+- **Database:** Supabase (PostgreSQL + RLS)
+- **Font:** Plus Jakarta Sans via `next/font/google`
+- **Auth:** Supabase Auth (role-based — planned, not yet built)
+- **Deployment:** Vercel (not yet deployed)
 
 ### Phase 2 — Mobile App (after web is solid)
-- **Framework:** React Native + Expo
-- Convert web logic/API into mobile shell
-- Same Supabase backend — no rebuild needed
+- React Native + Expo, same Supabase backend
+
+---
+
+## Color Scheme
+- Background: `#F0F4F8`
+- Sidebar: `#0B1F3A` (deep navy)
+- Accent / Primary: `#0284C7` (sky blue)
+- Text: `#0B1F3A`
+- Muted: `#64748B`
+- Border: `#DDE4ED`
+- Flags: Green `#16A34A`, Yellow `#D97706`, Red `#DC2626`
+
+---
+
+## How to Run
+```bash
+cd ~/Desktop/dev/managr
+npm run dev
+```
+App runs at: http://localhost:3000
+
+---
+
+## Critical Technical Notes
+
+### shadcn/ui Base UI compatibility
+- `DialogTrigger asChild` does NOT work — causes runtime errors
+- Pattern to use: plain `<Button onClick={() => setOpen(true)}>` before the `<Dialog>` component, no `DialogTrigger`
+
+### Font loading
+- Font is loaded via `next/font/google` in `layout.tsx` as `Plus_Jakarta_Sans`
+- NEVER use `@import url()` for Google Fonts in `globals.css` — breaks PostCSS
+
+### Supabase client
+- Always use `createClient()` from `@/lib/supabase/client` in client components
+- URL: `https://tvirellvovwppyofjtjs.supabase.co` (stored in `.env.local`)
+
+### Route params in client components
+- Always use `useParams()` from `next/navigation` — never use server-side params in client components
 
 ---
 
 ## Navigation Structure
 ```
-Homes → Home Dashboard → Residents → Resident Profile
+/homes                          → Dashboard (all homes + stats)
+/homes/[id]                     → Home Dashboard (residents list)
+/homes/[id]/residents/[id]      → Resident Profile (all tabs)
 ```
 
 ---
 
-## User Roles
-| Role    | Can Do                                          |
-|---------|-------------------------------------------------|
-| Admin   | Everything — add homes, manage all residents    |
-| Manager | Manage residents in their assigned home         |
-| Viewer  | Read-only access to their assigned home         |
+## Supabase Tables (all created)
 
----
+### homes
+- id, name, address, notes, bed_count, house_manager_name, assistant_manager_name, created_at
 
-## Core Modules (MVP)
+### residents
+- id, home_id, full_name, phone, dob, move_in_date, sobriety_date, drug_of_choice
+- status (Active / On Pass / Discharged), flag (Green / Yellow / Red), risk_level
+- room_number, emergency_contact_name, emergency_contact_phone
+- sponsor_name, case_manager_name, therapist_name
+- notes, points, is_archived
 
-### 1. Homes
-- List all homes with name, address, resident count
-- Add / edit / archive homes
-- Click into a home to see its dashboard
+### drug_tests
+- id, resident_id, test_date, result, notes, recorded_by, created_at
 
-### 2. Home Dashboard
-- Home info + stats (bed count, occupancy, flagged residents)
-- List of current residents with status + flag color
-- Add resident button
+### chores
+- id, resident_id, title, cadence (Daily/Weekly/One-time), status (Pending/Done), due_date, completed_at, completed_by
 
-### 3. Residents
-- Active, On Pass, Discharged statuses
-- Archive discharged residents (never deleted — can be readmitted)
-- Transfer residents between homes (all notes/history follow them)
-- Full profile with all history visible to new manager
+### notes
+- id, resident_id, home_id, type (Note/Incident/Relapse), body, created_by, created_at
 
-### 4. Resident Profile
-Full name, photo, status, flag (Green/Yellow/Red), points, sobriety date,
-intake date, drug of choice, phone, emergency contact, risk level
-
-Sections inside profile:
-- Medications
-- Chores
-- Drug Tests
-- Documents
-- Notes / Incident Reports
-- Appointments (doctor, therapy)
-- Use history
-
-### 5. Chores
-- Assigned per resident
-- Daily or Weekly cadence
-- Status: Pending / Done
-- Completed by + timestamp
-
-### 6. Drug Tests
-- Date, result (Negative / Positive / Refused / Inconclusive)
-- Notes, recorded by
-
-### 7. Documents
-- Types: ID, Insurance, Consent, Treatment Plan, Other
-- Status: On File / Missing / Expiring Soon
-- File upload via Supabase Storage
-
-### 8. Points System
-- Simple +/- counter per resident (Phase 1)
-- Points history ledger (Phase 2)
-
-### 9. Nightly Reports
-- Sunday report template (matches how Mike's facility runs)
-- Structured form that generates a report
-- Reports archived per house per week
-
-### 10. Incident Reports
-- Tied to resident + date + house
-- Notes field, severity, resolution
-- All incident reports follow the resident if they transfer
-
----
-
-## Data Models
-
-### Homes
-- id, name, address, notes, bed_count, created_at
-
-### Residents
-- id, home_id, full_name, photo_url, move_in_date, move_out_date
-- status (Active / On Pass / Discharged)
-- phone, emergency_contact_name, emergency_contact_phone
-- points (integer), flag (Green / Yellow / Red)
-- sobriety_date, intake_date, drug_of_choice, risk_level
-- is_archived (bool)
-
-### Chores
-- id, resident_id, title, cadence (Daily/Weekly)
-- due_date, status (Pending/Done), completed_at, completed_by
-
-### Drug Tests
-- id, resident_id, test_date, result, notes, recorded_by
-
-### Documents
-- id, resident_id, doc_type, file_url, status, uploaded_at, uploaded_by
-
-### Medications
+### medications
 - id, resident_id, name, dosage, frequency, prescriber, start_date, notes
 
-### Notes / Incidents
-- id, resident_id, home_id, type (Note / Incident), body
-- severity (for incidents), created_by, created_at
+### weekly_meetings
+- id, resident_id, meeting_date, notes, created_by, created_at
 
-### Appointments
-- id, resident_id, type (Doctor/Therapy/Other), date_time, location, notes, status
-
-### Nightly Reports
-- id, home_id, report_date, submitted_by, body (JSON), created_at
+### restrictions
+- id, resident_id, title, notes, is_active (bool), created_at
 
 ---
 
-## Design Principles
-- **Mobile-first** — even the web version must look and feel great on a phone browser
-- **Tap-first workflow** — big buttons, clear labels, no confusion
-- **Professional + premium** — this is a product we're selling to facilities
-- **Clean and elegant** — not clinical or cold. Warm but sharp.
-- **Color language:** Green = good, Yellow = watch, Red = alert (used for flags throughout)
-- Use shadcn/ui components + Tailwind
-- Use ui-ux-pro-max skill for all design decisions
+## File Structure (key files)
+
+```
+src/
+  app/
+    globals.css                          — Color tokens, utility classes
+    layout.tsx                           — Root layout, Plus Jakarta Sans font
+    page.tsx                             — Redirects to /homes
+    homes/
+      page.tsx                           — CLIENT: All homes dashboard + stats
+      [id]/
+        page.tsx                         — CLIENT: Home dashboard + resident list
+        residents/
+          [residentId]/
+            page.tsx                     — CLIENT: Full resident profile (7 tabs)
+  components/
+    layout/
+      Sidebar.tsx                        — Deep navy sidebar, fetches homes for sub-nav
+      MobileNav.tsx                      — Fixed bottom nav, 4 items
+    homes/
+      AddHomeDialog.tsx                  — Add home form dialog
+      HomeCard.tsx                       — Home card with occupancy bar + flagged banner
+      HomeListRow.tsx                    — List view row for homes
+    residents/
+      AddResidentDialog.tsx              — Full 16-field add resident form (4 sections)
+      ResidentRow.tsx                    — Resident row linking to profile
+  lib/
+    supabase/
+      client.ts                          — Browser Supabase client
+docs/
+  features.md                            — Full feature tracking list
+  plans/
+    2026-03-31-mvp-foundation.md         — Original implementation plan
+```
+
+---
+
+## Resident Profile Tabs (all built)
+1. **Overview** — personal info, contacts (sponsor, case manager, therapist), general notes
+2. **Drug Tests** — log new test, full test history with result badges
+3. **Chores** — assign chores, toggle done/pending, cadence (Daily/Weekly/One-time)
+4. **Notes** — add Note / Incident / Relapse entries, timeline view
+5. **Medications** — add meds with dosage, frequency, prescriber
+6. **Meetings** — log weekly house meeting notes per resident, history view
+7. **Restrictions** — add restrictions, lift/reinstate them, lifted ones shown separately
+
+---
+
+## What Was Built (Cumulative)
+
+### Sprint 1 — Foundation ✅
+- Next.js scaffold, Supabase connected, shadcn/ui installed
+- Homes screen (card + list toggle)
+- Home Dashboard (stats + resident list sorted by flag)
+- Add Home dialog
+- Add Resident dialog (16 fields, 4 sections)
+
+### Sprint 2 — Design + Profile ✅
+- Premium design: navy sidebar, sky blue accent, Plus Jakarta Sans
+- Resident Profile page with full header card (name, status, flag, days sober, points +/-)
+- All 7 profile tabs: Overview, Drug Tests, Chores, Notes, Medications, Meetings, Restrictions
+- Points live update (no page reload)
+- Days sober auto-calculated from sobriety date
+
+### Database fixes applied
+- Added missing columns to residents: `dob`, `room_number`, `sponsor_name`, `case_manager_name`, `therapist_name`, `notes`
+- Created `weekly_meetings` table
+- Created `restrictions` table
+
+---
+
+## What's Next
+
+### Immediate (next session)
+- [ ] Test all 7 tabs end-to-end (add data, verify it saves and loads)
+- [ ] Edit resident profile (currently read-only after creation)
+- [ ] Discharge resident flow (sets status to Discharged, marks is_archived)
+- [ ] "Due Today" dashboard — who has drug tests, chores overdue, appointments today
+
+### Short Term
+- [ ] Bulk drug test — test all residents in a home at once
+- [ ] Curfew check-in log per resident
+- [ ] Sobriety milestones (30/60/90 day badges)
+- [ ] Resident timeline view (single scrollable history of everything)
+- [ ] Nightly reports form
+
+### Medium Term
+- [ ] Auth / login (Supabase Auth)
+- [ ] Role-based access (Admin / Manager / Viewer)
+- [ ] Deploy to Vercel
+- [ ] Give to Mike
 
 ---
 
@@ -162,38 +206,6 @@ Sections inside profile:
 | `frontend-design` | Building any UI component or screen |
 | `brainstorming` | Before adding any new feature |
 | `writing-plans` | Before starting any implementation sprint |
-| `systematic-debugging` | When something breaks |
-| `verification-before-completion` | Before claiming anything is done |
-
----
-
-## Phase 2 Features (after MVP)
-- Messaging within app
-- Calendar integration
-- Due Today dashboard
-- More advanced flag automation
-- Points history ledger
-- Push notifications
-- React Native mobile app (same Supabase backend)
-- Multi-facility admin panel
-- Billing / subscription for new customers
-
----
-
-## What's Been Done
-- [x] Project folder created: `~/Desktop/dev/managr`
-- [x] Git initialized
-- [x] GitHub repo created
-- [x] CLAUDE.md written
-- [x] Project blueprint documented
-
-## What's Next (First Build Session)
-1. Run `npx create-next-app@latest` to scaffold the app
-2. Set up Supabase project + connect
-3. Install shadcn/ui + Tailwind
-4. Build the Homes screen first (list + add home)
-5. Build Home Dashboard
-6. Build Resident Profile shell
 
 ---
 

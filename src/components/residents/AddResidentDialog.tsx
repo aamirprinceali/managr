@@ -27,6 +27,7 @@ function todayISO() {
 export default function AddResidentDialog({ homeId, onAdded }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // All form fields — grouped by section for readability
   const [form, setForm] = useState({
@@ -86,6 +87,7 @@ export default function AddResidentDialog({ homeId, onAdded }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     // Insert the new resident into Supabase
     const { error } = await supabase.from("residents").insert({
@@ -113,6 +115,8 @@ export default function AddResidentDialog({ homeId, onAdded }: Props) {
       setOpen(false);
       resetForm();
       onAdded?.();
+    } else {
+      setError(error.message);
     }
 
     setLoading(false);
@@ -346,6 +350,14 @@ export default function AddResidentDialog({ homeId, onAdded }: Props) {
                 rows={3}
               />
             </div>
+
+            {/* Error message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">
+                <p className="text-sm text-red-700 font-medium">Could not add resident</p>
+                <p className="text-xs text-red-600 mt-0.5">{error}</p>
+              </div>
+            )}
 
             {/* Action buttons */}
             <div className="flex gap-3 pt-1">

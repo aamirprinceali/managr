@@ -26,11 +26,28 @@ type Resident = {
   phone: string | null;
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
-  sponsor: string | null;
-  case_manager: string | null;
+  sponsor_name: string | null;
+  case_manager_name: string | null;
+  therapist_name: string | null;
   notes: string | null;
   room_number: string | null;
   dob: string | null;
+};
+
+type WeeklyMeeting = {
+  id: string;
+  meeting_date: string;
+  notes: string;
+  created_by: string | null;
+  created_at: string;
+};
+
+type Restriction = {
+  id: string;
+  title: string;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
 };
 
 type DrugTest = {
@@ -158,13 +175,15 @@ export default function ResidentProfilePage() {
   const [resident, setResident] = useState<Resident | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "drugtests" | "chores" | "notes" | "medications">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "drugtests" | "chores" | "notes" | "medications" | "meetings" | "restrictions">("overview");
 
   // Tab-specific data
   const [drugTests, setDrugTests] = useState<DrugTest[]>([]);
   const [chores, setChores] = useState<Chore[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
+  const [meetings, setMeetings] = useState<WeeklyMeeting[]>([]);
+  const [restrictions, setRestrictions] = useState<Restriction[]>([]);
 
   // Points updating state
   const [pointsLoading, setPointsLoading] = useState(false);
@@ -191,6 +210,16 @@ export default function ResidentProfilePage() {
   const [medFrequency, setMedFrequency] = useState("");
   const [medPrescriber, setMedPrescriber] = useState("");
   const [medSubmitting, setMedSubmitting] = useState(false);
+
+  // Weekly meeting form state
+  const [meetingDate, setMeetingDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [meetingNotes, setMeetingNotes] = useState("");
+  const [meetingSubmitting, setMeetingSubmitting] = useState(false);
+
+  // Restriction form state
+  const [restrictionTitle, setRestrictionTitle] = useState("");
+  const [restrictionNotes, setRestrictionNotes] = useState("");
+  const [restrictionSubmitting, setRestrictionSubmitting] = useState(false);
 
   // ── Load resident data ─────────────────────────────────────────────────────
   const loadResident = useCallback(async () => {
@@ -254,6 +283,28 @@ export default function ResidentProfilePage() {
     setMedications((data as Medication[]) ?? []);
   }, [residentId]);
 
+  // ── Load weekly meetings ───────────────────────────────────────────────────
+  const loadMeetings = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("weekly_meetings")
+      .select("*")
+      .eq("resident_id", residentId)
+      .order("meeting_date", { ascending: false });
+    setMeetings((data as WeeklyMeeting[]) ?? []);
+  }, [residentId]);
+
+  // ── Load restrictions ──────────────────────────────────────────────────────
+  const loadRestrictions = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("restrictions")
+      .select("*")
+      .eq("resident_id", residentId)
+      .order("created_at", { ascending: false });
+    setRestrictions((data as Restriction[]) ?? []);
+  }, [residentId]);
+
   // ── Initial load ───────────────────────────────────────────────────────────
   useEffect(() => {
     loadResident();
@@ -261,7 +312,9 @@ export default function ResidentProfilePage() {
     loadChores();
     loadNotes();
     loadMedications();
-  }, [loadResident, loadDrugTests, loadChores, loadNotes, loadMedications]);
+    loadMeetings();
+    loadRestrictions();
+  }, [loadResident, loadDrugTests, loadChores, loadNotes, loadMedications, loadMeetings, loadRestrictions]);
 
   // ── Points update ──────────────────────────────────────────────────────────
   async function updatePoints(delta: number) {
@@ -365,6 +418,51 @@ export default function ResidentProfilePage() {
     loadMedications();
   }
 
+  // ── Submit new weekly meeting note ────────────────────────────────────────
+  async function submitMeeting(e: React.FormEvent) {
+    e.preventDefault();
+    if (!meetingNotes.trim()) return;
+    setMeetingSubmitting(true);
+    const supabase = createClient();
+    await supabase.from("weekly_meetings").insert({
+      resident_id: residentId,
+      meeting_date: meetingDate,
+      notes: meetingNotes.trim(),
+    });
+    setMeetingDate(new Date().toISOString().split("T")[0]);
+    setMeetingNotes("");
+    setMeetingSubmitting(false);
+    loadMeetings();
+  }
+
+  // ── Submit new restriction ────────────────────────────────────────────────
+  async function submitRestriction(e: React.FormEvent) {
+    e.preventDefault();
+    if (!restrictionTitle.trim()) return;
+    setRestrictionSubmitting(true);
+    const supabase = createClient();
+    await supabase.from("restrictions").insert({
+      resident_id: residentId,
+      title: restrictionTitle.trim(),
+      notes: restrictionNotes.trim() || null,
+      is_active: true,
+    });
+    setRestrictionTitle("");
+    setRestrictionNotes("");
+    setRestrictionSubmitting(false);
+    loadRestrictions();
+  }
+
+  // ── Toggle restriction active/inactive ────────────────────────────────────
+  async function toggleRestriction(r: Restriction) {
+    const supabase = createClient();
+    await supabase
+      .from("restrictions")
+      .update({ is_active: !r.is_active })
+      .eq("id", r.id);
+    loadRestrictions();
+  }
+
   // ── Calculate days sober ───────────────────────────────────────────────────
   const daysSober = resident?.sobriety_date
     ? Math.floor((Date.now() - new Date(resident.sobriety_date).getTime()) / (1000 * 60 * 60 * 24))
@@ -435,6 +533,8 @@ export default function ResidentProfilePage() {
     { key: "chores", label: "Chores" },
     { key: "notes", label: "Notes" },
     { key: "medications", label: "Medications" },
+    { key: "meetings", label: "Meetings" },
+    { key: "restrictions", label: "Restrictions" },
   ] as const;
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -571,8 +671,9 @@ export default function ResidentProfilePage() {
                     <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>{resident.emergency_contact_phone}</p>
                   )}
                 </div>
-                <InfoRow label="Sponsor" value={resident.sponsor} />
-                <InfoRow label="Case Manager" value={resident.case_manager} />
+                <InfoRow label="Sponsor" value={resident.sponsor_name} />
+                <InfoRow label="Case Manager" value={resident.case_manager_name} />
+                <InfoRow label="Therapist" value={resident.therapist_name} />
               </div>
             </div>
 
@@ -865,6 +966,150 @@ export default function ResidentProfilePage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══ WEEKLY MEETINGS TAB ══════════════════════════════════════ */}
+        {activeTab === "meetings" && (
+          <div>
+            {/* Log new meeting note form */}
+            <SectionLabel>Log Meeting Notes</SectionLabel>
+            <form onSubmit={submitMeeting} className="space-y-3 mb-6">
+              <input
+                type="date"
+                value={meetingDate}
+                onChange={(e) => setMeetingDate(e.target.value)}
+                className={inputCls}
+                style={inputStyle}
+                required
+              />
+              <textarea
+                placeholder="What was discussed in this week's meeting? (progress, concerns, goals...)"
+                value={meetingNotes}
+                onChange={(e) => setMeetingNotes(e.target.value)}
+                rows={4}
+                className={`${inputCls} resize-none`}
+                style={inputStyle}
+                required
+              />
+              <button
+                type="submit"
+                disabled={meetingSubmitting}
+                className={primaryBtn}
+                style={primaryBtnStyle}
+              >
+                {meetingSubmitting ? "Saving..." : "Save Meeting Notes"}
+              </button>
+            </form>
+
+            <hr className="mb-5" style={{ borderColor: "#EEF2F7" }} />
+            <SectionLabel>Meeting History</SectionLabel>
+
+            {/* Meeting history list */}
+            {meetings.length === 0 ? (
+              <p className="text-sm text-center py-8" style={{ color: "#94A3B8" }}>No meeting notes logged yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {meetings.map((m) => (
+                  <div key={m.id} className="p-4 rounded-xl border" style={{ borderColor: "#EEF2F7", background: "#FAFBFC" }}>
+                    <p className="text-xs font-semibold mb-2" style={{ color: "#0284C7" }}>
+                      {fmtDate(m.meeting_date)}
+                    </p>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: "#334155" }}>{m.notes}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══ RESTRICTIONS TAB ══════════════════════════════════════════ */}
+        {activeTab === "restrictions" && (
+          <div>
+            {/* Add new restriction form */}
+            <SectionLabel>Add Restriction</SectionLabel>
+            <form onSubmit={submitRestriction} className="space-y-3 mb-6">
+              <input
+                type="text"
+                placeholder="Restriction title (e.g. No overnight passes)"
+                value={restrictionTitle}
+                onChange={(e) => setRestrictionTitle(e.target.value)}
+                className={inputCls}
+                style={inputStyle}
+                required
+              />
+              <textarea
+                placeholder="Details or reason (optional)"
+                value={restrictionNotes}
+                onChange={(e) => setRestrictionNotes(e.target.value)}
+                rows={2}
+                className={`${inputCls} resize-none`}
+                style={inputStyle}
+              />
+              <button
+                type="submit"
+                disabled={restrictionSubmitting}
+                className={primaryBtn}
+                style={primaryBtnStyle}
+              >
+                {restrictionSubmitting ? "Adding..." : "Add Restriction"}
+              </button>
+            </form>
+
+            <hr className="mb-5" style={{ borderColor: "#EEF2F7" }} />
+            <SectionLabel>Active Restrictions</SectionLabel>
+
+            {/* Restrictions list */}
+            {restrictions.length === 0 ? (
+              <p className="text-sm text-center py-8" style={{ color: "#94A3B8" }}>No restrictions on file.</p>
+            ) : (
+              <div className="space-y-2">
+                {/* Active restrictions first */}
+                {restrictions.filter(r => r.is_active).map((r) => (
+                  <div key={r.id} className="flex items-start gap-3 p-3 rounded-xl border" style={{ borderColor: "#EEF2F7" }}>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold" style={{ color: "#0B1F3A" }}>{r.title}</p>
+                      {r.notes && (
+                        <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>{r.notes}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => toggleRestriction(r)}
+                      className="text-xs px-2 py-1 rounded-lg border font-medium transition hover:bg-gray-50 flex-shrink-0"
+                      style={{ borderColor: "#DDE4ED", color: "#64748B" }}
+                    >
+                      Lift
+                    </button>
+                  </div>
+                ))}
+
+                {/* Lifted restrictions section */}
+                {restrictions.some(r => !r.is_active) && (
+                  <>
+                    <p className="text-xs font-bold uppercase tracking-widest mt-4 mb-2" style={{ color: "#CBD5E1" }}>
+                      Lifted
+                    </p>
+                    {restrictions.filter(r => !r.is_active).map((r) => (
+                      <div key={r.id} className="flex items-start gap-3 p-3 rounded-xl border opacity-50" style={{ borderColor: "#EEF2F7" }}>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium line-through" style={{ color: "#94A3B8" }}>{r.title}</p>
+                          {r.notes && (
+                            <p className="text-xs mt-0.5" style={{ color: "#94A3B8" }}>{r.notes}</p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => toggleRestriction(r)}
+                          className="text-xs px-2 py-1 rounded-lg border font-medium transition hover:bg-gray-50 flex-shrink-0"
+                          style={{ borderColor: "#DDE4ED", color: "#64748B" }}
+                        >
+                          Reinstate
+                        </button>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             )}
           </div>

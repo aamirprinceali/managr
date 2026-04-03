@@ -10,83 +10,109 @@ Legend: ✅ Built | 🔨 In Progress | 📋 Planned | 💡 Future Idea
 ## HOMES
 
 ### Core Home Management
-- ✅ List all homes (card view)
-- 🔨 Toggle between card view and list view
-- ✅ Add a new home (name, address, notes, bed count)
+- ✅ List all homes (card view + list view toggle)
+- ✅ Add a new home (name, address, bed count, house manager, assistant manager, notes)
+- ✅ Home cards showing manager name, occupancy bar, "Needs Attention" banner for red-flagged residents
+- ✅ Home dashboard with resident count, on-pass count, flagged count
+- ✅ Bed occupancy display (X of Y beds occupied)
 - 📋 Edit home details
 - 📋 Archive / deactivate a home
-- 📋 Name the house (e.g. "Oak House", "Cedar Manor")
-- 📋 Assign house manager to a home
-- 📋 See who the house manager is on each home card
-- 📋 Total bed count per home
-- 📋 Total occupied spots per home
-- 📋 Total vacant spots per home
 - 📋 Alert when home is near capacity (e.g. 1 bed left)
 - 📋 Reserve a spot in a home (hold a bed without a resident yet)
-- 📋 Add rooms within a home (Room 1, Room 2, Room A, etc.)
-- 📋 Assign residents to specific rooms
+- 📋 Add rooms within a home (Room 1, Room 2, etc.)
 
 ### Main Dashboard (All Homes Overview)
-- 🔨 Total residents across all homes
-- 🔨 Total vacancies across all homes
-- 🔨 Total beds/spots across all homes
-- 📋 Count of flagged (Red) residents across all homes
-- 📋 Quick stats card at top of homes screen
+- ✅ Total homes stat card
+- ✅ Total residents across all homes
+- ✅ Total vacancies (open beds) across all homes
+- ✅ Total red-flagged residents ("Need Attention")
 
 ---
 
 ## RESIDENTS
 
 ### Core Resident Management
-- ✅ Add a resident to a home
+- ✅ Add a resident to a home (16-field form: basic info, intake, contacts, notes)
 - ✅ View resident list per home (sorted Red → Yellow → Green)
 - ✅ Resident status: Active / On Pass / Discharged
 - ✅ Flag system: Green / Yellow / Red (visible everywhere)
-- ✅ Points counter (+/-)
+- ✅ Points counter (+/- live update, no page reload)
 - 📋 Edit resident profile
 - 📋 Move resident to a different home (all history follows them)
-- 📋 Discharge a resident (moves to archive)
+- 📋 Discharge a resident (moves to archive, is_archived = true)
 - 📋 Archive of discharged residents (never deleted)
 - 📋 Readmit an archived resident (restores all history)
 - 📋 Reserve a bed for a future resident (pre-admit)
 
-### Resident Profile — Personal Info
+### Resident Profile — Personal Info (Overview Tab)
 - ✅ Full name
-- ✅ Photo
-- ✅ Move-in date / intake date
-- ✅ Move-out date
-- ✅ Status (Active / On Pass / Discharged)
-- ✅ Flag color (Green / Yellow / Red)
-- ✅ Phone number
-- ✅ Emergency contact name + phone
-- ✅ Sobriety date + days sober counter
+- ✅ Status badge (Active / On Pass / Discharged)
+- ✅ Flag color dot (Green / Yellow / Red)
+- ✅ Days sober counter (auto-calculated from sobriety date)
+- ✅ Move-in / intake date
 - ✅ Drug of choice
 - ✅ Risk level (Low / Medium / High)
-- 📋 Date of birth (DOB)
-- 📋 Room assignment within the home
-- 📋 Sponsor name + contact info
-- 📋 Case manager name + contact info
-- 📋 Therapist name + contact info
+- ✅ Room number
+- ✅ Date of birth
+- ✅ Phone number
+- ✅ Emergency contact name + phone
+- ✅ Sponsor name
+- ✅ Case manager name
+- ✅ Therapist name
+- ✅ General notes from resident record
+- 📋 Photo upload
+- 📋 Multiple contacts (family, guardian, etc.) — labeled, unlimited
 - 📋 Is in clinical program? (yes/no + program name)
-- 📋 Important health history notes
-- 📋 Multiple contacts (family, guardian, girlfriend, etc.) — add, label, and store any number of contacts
 
-### Resident Profile — Activity & History
-- 📋 Drug test history (full log of all tests)
-- 📋 Incident reports (documented events with date, type, severity, notes)
-  - Relapse can be logged as an incident type
-- 📋 Notes section (general manager notes on the resident)
-- 📋 Privileges tracking (car privileges, curfew level, phone privileges, etc.)
-- 📋 Points history ledger (full log of +/- changes)
-- 📋 Chores assigned + completion history
-- 📋 Documents (upload and store files — contracts, IDs, treatment plans, etc.)
-- 📋 Behavioral contracts (signed docs attached to profile)
+---
 
-### Resident Profile — Appointments & Calendar
-- 📋 Appointment list (doctor, therapy, court, other)
-- 📋 Resident-level calendar (view/add appointments for that resident)
-- 📋 House manager can add to resident's calendar
-- 📋 Resident can have own calendar view (future — resident-facing app)
+## RESIDENT PROFILE TABS
+
+### Drug Tests Tab ✅
+- ✅ Log a drug test (date, result, notes)
+- ✅ Results: Negative / Positive / Refused / Inconclusive (color-coded badges)
+- ✅ Full test history (newest first)
+- 📋 Filter/search test history
+- 📋 Bulk drug test (test all residents in a home at once)
+- 📋 Panel type (5-panel, 10-panel, etc.)
+- 📋 Recorded by field
+
+### Chores Tab ✅
+- ✅ Assign chores to a resident (title + cadence)
+- ✅ Cadence: Daily / Weekly / One-time
+- ✅ Mark done / undo (checkbox toggle)
+- ✅ Visual strikethrough on completed chores
+- 📋 Due date per chore
+- 📋 Overdue chore alerts
+- 📋 House-level chore board (all residents' chores in one view)
+
+### Notes Tab ✅
+- ✅ Add notes with type: Note / Incident / Relapse
+- ✅ Color-coded type badges
+- ✅ Timeline view (newest first) with timestamp
+- 📋 Edit / delete notes
+- 📋 Filter by type
+
+### Medications Tab ✅
+- ✅ Add medication (name, dosage, frequency, prescriber)
+- ✅ List all current medications
+- 📋 Start date + end date
+- 📋 Mark as discontinued
+- 📋 MAR (Medication Administration Record) log
+
+### Weekly Meetings Tab ✅
+- ✅ Log house meeting notes per resident (date + notes)
+- ✅ Meeting history view (newest first, date highlighted)
+- 📋 Tag meeting attendees
+- 📋 Mark action items from meeting
+
+### Restrictions Tab ✅
+- ✅ Add a restriction with title + optional details
+- ✅ Active restrictions shown with "Lift" button
+- ✅ Lifted restrictions shown separately (crossed out) with "Reinstate" button
+- ✅ is_active toggle persists to Supabase
+- 📋 Restriction history log (when added, when lifted, by whom)
+- 📋 Restriction types (curfew, phone, visitors, passes, etc.)
 
 ---
 
@@ -108,78 +134,48 @@ Legend: ✅ Built | 🔨 In Progress | 📋 Planned | 💡 Future Idea
 - 📋 Severity levels (Minor / Moderate / Serious)
 - 📋 Resolution notes
 - 📋 All incident reports follow the resident (visible on profile)
-- 📋 Relapse flagged as incident type (triggers flag color change option)
 
 ---
 
-## DRUG TESTS
+## PLANNED FEATURES (Next Sessions)
 
-- 📋 Log a drug test per resident (date, result, panel type, notes)
-- 📋 Results: Negative / Positive / Refused / Inconclusive
-- 📋 Recorded by + timestamp
-- 📋 Full test history per resident
-- 📋 Filter/search test history
+### Due Today Dashboard
+- 📋 Who has a drug test scheduled today
+- 📋 Whose chores are overdue
+- 📋 Who has an appointment today
+- 📋 Single command-center view for house managers
 
----
+### Curfew Check-In
+- 📋 Daily log: Checked in on time / Late / No show
+- 📋 Per resident
+- 📋 History log
 
-## CHORES
+### Sobriety Milestones
+- 📋 Auto-detect 30 / 60 / 90 day / 6mo / 1yr milestones
+- 📋 Badge on resident profile when milestone hit
+- 📋 Manager notification
 
-- 📋 Assign chores to a resident
-- 📋 Daily or Weekly cadence
-- 📋 Mark complete (by whom + timestamp)
-- 📋 Pending/overdue chore alerts
-- 📋 House-level chore board (all residents' chores in one view)
+### Resident Timeline View
+- 💡 One scrollable timeline of everything: tests, incidents, notes, moves, milestones
+- 💡 No competitor has this — major differentiator
 
----
+### Discharge Summary
+- 💡 Auto-generate PDF when resident is discharged
+- 💡 Includes: stay dates, test history, incidents, notes summary
 
-## MEDICATIONS
-
-- 📋 Medication list per resident (name, dosage, frequency, prescriber)
-- 📋 Start date + end date
-- 📋 Notes
-- 📋 MAR (Medication Administration Record) log
-
----
-
-## DOCUMENTS
-
-- 📋 Upload documents to resident profile
-- 📋 Document types: ID, Insurance, Consent Form, Treatment Plan, Behavioral Contract, Other
-- 📋 Status: On File / Missing / Expiring Soon
-- 📋 Uploaded by + timestamp
-- 📋 Download/view document
-
----
-
-## COMMUNICATIONS (Phase 2)
-
-- 💡 In-app messaging from house manager to resident's phone
-- 💡 Broadcast message to all residents in a home
-- 💡 Notification alerts (curfew reminders, appointment reminders)
-- 💡 SMS integration via Twilio
-
----
-
-## CALENDAR (Phase 2)
-
-- 💡 Admin-level calendar (all homes, all residents)
-- 💡 Per-home calendar
-- 💡 Per-resident calendar
-- 💡 Google Calendar integration
-- 💡 House manager can view all residents' appointments in one calendar
-- 💡 Appointment types: Doctor, Therapy, Court, AA/NA Meeting, Other
+### Bulk Drug Test
+- 📋 Test all residents in a home at once
+- 📋 One form, one submit, creates test record for each resident
 
 ---
 
 ## USER ROLES & ACCESS
 
-- 📋 Admin role — sees all homes, all residents, all data, all reports
-- 📋 House Manager role — assigned to one home, manages that home fully
-- 📋 House Manager can view other homes (read-only)
-- 📋 Viewer role — read-only access to assigned home
-- 📋 Login / authentication (email + password)
+- 📋 Admin role — sees all homes, all residents, all data
+- 📋 House Manager role — assigned to one home
+- 📋 Viewer role — read-only
+- 📋 Login / authentication (Supabase Auth)
 - 📋 Assign house managers to homes
-- 📋 See house manager name on each home
 
 ---
 
@@ -193,48 +189,43 @@ Legend: ✅ Built | 🔨 In Progress | 📋 Planned | 💡 Future Idea
 
 ---
 
-## AAMIR'S ADDITIONAL IDEAS & SUGGESTIONS
+## COMMUNICATIONS (Phase 2)
 
-### Ideas Worth Adding
-- **Privileges tracker** — each facility has its own privilege system (car, curfew time, phone, etc.). Build it as a configurable list so Mike can customize what privileges exist.
-- **Sobriety milestones** — auto-celebrate 30, 60, 90, 6mo, 1yr with a badge on the profile. Managers love being able to celebrate these.
-- **"Red flag" auto-escalation** — if a resident gets a positive drug test or a serious incident report, auto-suggest changing their flag to Red.
-- **Bed map visualization** — visual grid of all rooms/beds in a home showing who's in each spot. Drag to move residents.
-- **Resident transfer log** — every time a resident moves between homes, log it with date + reason so there's a permanent record.
-- **Curfew check-in** — simple "checked in on time / late / no show" daily log per resident.
-- **Sponsor contact quick-dial** — one tap to call sponsor from resident's profile.
-- **Quick notes** — floating "+ note" button on every screen so managers can jot something down fast without navigating into a profile.
-- **House rules acknowledgment** — resident signs/acknowledges house rules digitally, stored in documents.
-
-### My Suggestions to Stand Out vs Competitors
-- **Resident timeline view** — one scrollable timeline of everything that happened to a resident (tests, incidents, notes, moves, milestones). No competitor has this.
-- **Discharge summary auto-generator** — when you discharge a resident, auto-generate a PDF summary of their stay (dates, tests, incidents, notes). Massive time saver for treatment teams.
-- **Occupancy rate tracking over time** — graph showing how full each home has been week over week. Useful for owners who are business-minded.
-- **"Due Today" dashboard widget** — one view showing: who has a drug test today, whose chores are overdue, who has an appointment today. Saves managers from checking 5 different places.
-- **Multi-facility support** — when selling to other facilities, one admin account can manage multiple locations. This is the enterprise play.
+- 💡 In-app messaging from house manager to resident's phone
+- 💡 Broadcast message to all residents in a home
+- 💡 SMS integration via Twilio
 
 ---
 
-## BUILD ORDER (Current Plan)
+## CALENDAR (Phase 2)
 
-### Sprint 1 — Foundation ✅ (Done)
+- 💡 Admin-level calendar (all homes, all residents)
+- 💡 Per-home calendar
+- 💡 Per-resident calendar
+- 💡 Google Calendar integration
+
+---
+
+## BUILD ORDER
+
+### Sprint 1 — Foundation ✅
 - Next.js scaffold, shadcn/ui, Supabase connected
 - Homes screen (list + add)
 - Home Dashboard (stats + resident list)
 
-### Sprint 2 — Design + Core Features 🔨 (Now)
-- Redesign with premium fonts and color scheme
+### Sprint 2 — Design + Core Features ✅
+- Premium design: navy/sky blue, Plus Jakarta Sans
 - Card/list toggle on homes screen
-- Dashboard stats (total residents, vacancies, total spots)
-- Fix 404 pages (residents, reports, settings stubs)
-- Add Resident form
-- Resident Profile screen
+- Dashboard stats (total residents, vacancies, flagged)
+- Add Resident form (16 fields)
+- Resident Profile — all 7 tabs built and functional
 
-### Sprint 3 — Resident Profile Depth
-- Drug tests module
-- Chores module
-- Notes + Incident Reports
-- Documents upload
+### Sprint 3 — Resident Actions (Next)
+- Edit resident profile
+- Discharge resident
+- Due Today dashboard
+- Bulk drug test
+- Curfew check-in
 
 ### Sprint 4 — Reports
 - Nightly report form
@@ -242,11 +233,10 @@ Legend: ✅ Built | 🔨 In Progress | 📋 Planned | 💡 Future Idea
 
 ### Sprint 5 — Access Control
 - Auth (login screen)
-- Role-based access (Admin / Manager / Viewer)
+- Role-based access
 - Assign managers to homes
 
 ### Sprint 6 — Polish + Deploy
 - Mobile responsiveness pass
-- Performance
 - Deploy to Vercel
 - Give to Mike
