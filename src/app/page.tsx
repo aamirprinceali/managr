@@ -1,6 +1,6 @@
-// Root page — immediately redirects to the Homes screen
+// Root page — redirects to the Dashboard
 import { redirect } from "next/navigation";
 
 export default function RootPage() {
-  redirect("/homes");
+  redirect("/dashboard");
 }

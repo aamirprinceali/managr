@@ -8,6 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import ResidentRow from "@/components/residents/ResidentRow";
 import AddResidentDialog from "@/components/residents/AddResidentDialog";
+import WeeklyDrugTests from "@/components/homes/WeeklyDrugTests";
 import { ArrowLeft, Users, BedDouble } from "lucide-react";
 import Link from "next/link";
 
@@ -145,6 +146,9 @@ export default function HomeDashboard() {
           <span>{sorted.length} of {home.bed_count} beds occupied</span>
         </div>
       )}
+
+      {/* Weekly drug test tracker — shows above resident list */}
+      <WeeklyDrugTests homeId={home.id} />
 
       {/* Residents section header + Add Resident button */}
       <div className="flex items-center justify-between mb-4">

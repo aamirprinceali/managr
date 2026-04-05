@@ -6,6 +6,8 @@ import AddHomeDialog from "@/components/homes/AddHomeDialog";
 import { Building2, LayoutGrid, List, BedDouble, Users, DoorOpen, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { useProfile } from "@/components/auth/UserProvider";
+import { useRouter } from "next/navigation";
 
 type Home = {
   id: string;
@@ -20,18 +22,32 @@ export default function HomesPage() {
   const [homes, setHomes] = useState<Home[]>([]);
   const [view, setView] = useState<"card" | "list">("card");
   const [loading, setLoading] = useState(true);
+  const { profile } = useProfile();
+  const router = useRouter();
+
+  // Managers go straight to their home — this page is primarily for the owner
+  useEffect(() => {
+    if (profile?.role === "manager" && profile?.home_id) {
+      router.replace(`/homes/${profile.home_id}`);
+    }
+  }, [profile, router]);
 
   async function loadHomes() {
     const supabase = createClient();
-    const { data } = await supabase
-      .from("homes")
-      .select("*, residents(id, flag)")
-      .order("name");
+    let query = supabase.from("homes").select("*, residents(id, flag)").order("name");
+    // Managers only see their assigned home
+    if (profile?.role === "manager" && profile?.home_id) {
+      query = supabase.from("homes").select("*, residents(id, flag)").eq("id", profile.home_id);
+    }
+    const { data } = await query;
     setHomes((data as Home[]) ?? []);
     setLoading(false);
   }
 
-  useEffect(() => { loadHomes(); }, []);
+  useEffect(() => {
+    if (profile !== null) loadHomes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile]);
 
   const totalResidents = homes.reduce((s, h) => s + h.residents.length, 0);
   const totalBeds = homes.reduce((s, h) => s + (h.bed_count || 0), 0);
@@ -115,7 +131,8 @@ export default function HomesPage() {
                 houseManagerName={h.house_manager_name}
                 residentCount={h.residents.length}
                 flaggedCount={h.residents.filter(r => r.flag === "Red").length}
-                bedCount={h.bed_count} />
+                bedCount={h.bed_count}
+                onRefresh={loadHomes} />
             ))}
           </div>
         ) : (
@@ -125,7 +142,8 @@ export default function HomesPage() {
                 houseManagerName={h.house_manager_name}
                 residentCount={h.residents.length}
                 flaggedCount={h.residents.filter(r => r.flag === "Red").length}
-                bedCount={h.bed_count} />
+                bedCount={h.bed_count}
+                onRefresh={loadHomes} />
             ))}
           </div>
         )
