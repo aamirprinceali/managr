@@ -16,7 +16,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <UserProvider>
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen flex" style={{ background: "#090B14" }}>
         {/* Sidebar — only shows on md screens and up (desktop/tablet) */}
         <div className="hidden md:flex">
           <Sidebar />

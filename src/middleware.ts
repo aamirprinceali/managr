@@ -1,54 +1,45 @@
-// Middleware — runs on every request before the page loads
-// If the user isn't logged in, they get redirected to /login
-// If they're already logged in and try to visit /login, they go to /dashboard
-import { createServerClient } from "@supabase/ssr";
+// Middleware — AUTH BYPASSED FOR DEVELOPMENT
+// To re-enable login: swap the two blocks below (comment out the bypass, uncomment the real auth)
 import { NextResponse, type NextRequest } from "next/server";
 
+// ✅ BYPASS MODE — no login required, go straight to the app
+export async function middleware(request: NextRequest) {
+  return NextResponse.next({ request });
+}
+
+/* 🔒 REAL AUTH — uncomment this when ready to go live (and comment out the bypass above)
+import { createServerClient } from "@supabase/ssr";
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
+        getAll() { return request.cookies.getAll(); },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
+          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
         },
       },
     }
   );
-
-  // Get the current user (safe — uses the server client)
   const { data: { user } } = await supabase.auth.getUser();
-
   const isLoginPage = request.nextUrl.pathname === "/login";
-
-  // Not logged in + not on login page → send to login
   if (!user && !isLoginPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
-
-  // Already logged in + trying to visit login → send to dashboard
   if (user && isLoginPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
-
   return supabaseResponse;
 }
+*/
 
 // Which routes this middleware runs on (everything except static files)
 export const config = {

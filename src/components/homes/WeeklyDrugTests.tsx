@@ -1,18 +1,15 @@
 "use client";
 // WeeklyDrugTests — tracks drug testing for the current calendar week (Monday–Sunday)
-// Auto-resets every Monday because the week changes and no tests exist for the new week yet
-// House manager can: flag everyone as due, mark individuals, or mark all as Negative at once
+// Auto-resets every Monday. Dark premium theme.
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
-  FlaskConical, CheckCircle, Clock, ChevronDown, ChevronUp,
-  Check, AlertTriangle, X
+  FlaskConical, CheckCircle, Clock, ChevronDown, ChevronUp, Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
 type Props = { homeId: string };
 
@@ -33,17 +30,15 @@ type LogForm = {
   recorded_by: string;
 };
 
-// Returns Monday of the current week as YYYY-MM-DD
 function getWeekMonday(): string {
   const now = new Date();
-  const day = now.getDay(); // 0=Sun, 1=Mon...
-  const diff = day === 0 ? -6 : 1 - day; // Walk back to Monday
+  const day = now.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
   const monday = new Date(now);
   monday.setDate(now.getDate() + diff);
   return monday.toISOString().split("T")[0];
 }
 
-// Returns Sunday of the current week as YYYY-MM-DD
 function getWeekSunday(): string {
   const monday = new Date(getWeekMonday() + "T00:00:00");
   const sunday = new Date(monday);
@@ -55,11 +50,19 @@ function formatDate(dateStr: string) {
   return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+// Result badge colors — dark theme
+const resultStyle = (result: string | null) => {
+  if (result === "Negative") return { bg: "rgba(34,197,94,0.12)", text: "#22C55E", dot: "#22C55E", glow: "rgba(34,197,94,0.4)" };
+  if (result === "Positive") return { bg: "rgba(239,68,68,0.12)", text: "#EF4444", dot: "#EF4444", glow: "rgba(239,68,68,0.5)" };
+  if (result === "Refused") return { bg: "rgba(245,158,11,0.12)", text: "#F59E0B", dot: "#F59E0B", glow: "rgba(245,158,11,0.4)" };
+  return { bg: "rgba(139,157,181,0.1)", text: "#8B9DB5", dot: "#4A6380", glow: "rgba(139,157,181,0.2)" };
+};
+
 export default function WeeklyDrugTests({ homeId }: Props) {
   const [residents, setResidents] = useState<ResidentTestStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
-  const [sessionActive, setSessionActive] = useState(false); // "testing session" mode
+  const [sessionActive, setSessionActive] = useState(false);
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
@@ -80,7 +83,6 @@ export default function WeeklyDrugTests({ homeId }: Props) {
   async function loadData() {
     setLoading(true);
 
-    // Get all active residents for this home
     const { data: residentData } = await supabase
       .from("residents")
       .select("id, full_name, room_number")
@@ -97,7 +99,6 @@ export default function WeeklyDrugTests({ homeId }: Props) {
 
     const ids = residentData.map((r: { id: string }) => r.id);
 
-    // Get all drug tests for these residents this week (Mon–Sun)
     const { data: tests } = await supabase
       .from("drug_tests")
       .select("id, resident_id, result, substance, test_date")
@@ -105,34 +106,31 @@ export default function WeeklyDrugTests({ homeId }: Props) {
       .gte("test_date", monday)
       .lte("test_date", sunday);
 
-    // Map tests by resident_id (most recent if somehow multiple)
     const testMap: Record<string, { id: string; result: string; substance: string | null }> = {};
     (tests ?? []).forEach((t: { id: string; resident_id: string; result: string; substance: string | null }) => {
       testMap[t.resident_id] = { id: t.id, result: t.result, substance: t.substance };
     });
 
-    const statuses: ResidentTestStatus[] = (residentData as { id: string; full_name: string; room_number: string | null }[]).map(r => ({
-      id: r.id,
-      full_name: r.full_name,
-      room_number: r.room_number,
-      testedThisWeek: !!testMap[r.id],
-      testResult: testMap[r.id]?.result ?? null,
-      testSubstance: testMap[r.id]?.substance ?? null,
-      testId: testMap[r.id]?.id ?? null,
-    }));
-
-    setResidents(statuses);
+    setResidents(
+      (residentData as { id: string; full_name: string; room_number: string | null }[]).map(r => ({
+        id: r.id,
+        full_name: r.full_name,
+        room_number: r.room_number,
+        testedThisWeek: !!testMap[r.id],
+        testResult: testMap[r.id]?.result ?? null,
+        testSubstance: testMap[r.id]?.substance ?? null,
+        testId: testMap[r.id]?.id ?? null,
+      }))
+    );
     setLoading(false);
   }
 
-  // Open the log test dialog for one resident
   function openLog(resident: ResidentTestStatus) {
     setLogTarget({ id: resident.id, name: resident.full_name });
     setLogForm({ result: "Negative", substance: "", notes: "", recorded_by: "" });
     setLogOpen(true);
   }
 
-  // Save a drug test for one resident
   async function saveTest(e: React.FormEvent) {
     e.preventDefault();
     if (!logTarget) return;
@@ -147,7 +145,6 @@ export default function WeeklyDrugTests({ homeId }: Props) {
       recorded_by: logForm.recorded_by || null,
     });
 
-    // If positive, also flag the resident as Red
     if (logForm.result === "Positive") {
       await supabase.from("residents").update({ flag: "Red" }).eq("id", logTarget.id);
     }
@@ -157,21 +154,14 @@ export default function WeeklyDrugTests({ homeId }: Props) {
     loadData();
   }
 
-  // Mark ALL untested residents as Negative — bulk action for days when everyone passes
   async function markAllTested() {
     setBulkLoading(true);
     const untested = residents.filter(r => !r.testedThisWeek);
-
     if (untested.length > 0) {
-      const inserts = untested.map(r => ({
-        resident_id: r.id,
-        test_date: today,
-        result: "Negative",
-        recorded_by: "Bulk — all tested",
-      }));
-      await supabase.from("drug_tests").insert(inserts);
+      await supabase.from("drug_tests").insert(
+        untested.map(r => ({ resident_id: r.id, test_date: today, result: "Negative", recorded_by: "Bulk — all tested" }))
+      );
     }
-
     setBulkConfirmOpen(false);
     setBulkLoading(false);
     setSessionActive(false);
@@ -183,19 +173,13 @@ export default function WeeklyDrugTests({ homeId }: Props) {
   const allTested = testedCount === totalCount && totalCount > 0;
   const progressPct = totalCount > 0 ? Math.round((testedCount / totalCount) * 100) : 0;
 
-  const resultStyle = (result: string | null) => {
-    if (result === "Negative") return { bg: "#DCFCE7", text: "#15803D", dot: "#16A34A" };
-    if (result === "Positive") return { bg: "#FEE2E2", text: "#DC2626", dot: "#DC2626" };
-    if (result === "Refused") return { bg: "#FEF3C7", text: "#D97706", dot: "#D97706" };
-    if (result === "Inconclusive") return { bg: "#F1F5F9", text: "#64748B", dot: "#94A3B8" };
-    return { bg: "#F1F5F9", text: "#64748B", dot: "#94A3B8" };
-  };
+  const barColor = allTested ? "#22C55E" : "#F59E0B";
 
   if (loading) {
     return (
-      <div className="bg-white border rounded-2xl p-4 animate-pulse mb-6" style={{ borderColor: "#DDE4ED" }}>
-        <div className="h-5 w-48 bg-gray-100 rounded mb-2" />
-        <div className="h-2 w-full bg-gray-100 rounded" />
+      <div className="rounded-2xl p-4 animate-pulse mb-6" style={{ background: "#161B27", border: "1px solid #1E2535" }}>
+        <div className="h-5 w-48 rounded mb-2" style={{ background: "#1E2535" }} />
+        <div className="h-2 w-full rounded" style={{ background: "#1E2535" }} />
       </div>
     );
   }
@@ -204,26 +188,28 @@ export default function WeeklyDrugTests({ homeId }: Props) {
 
   return (
     <>
-      <div className="bg-white border rounded-2xl overflow-hidden mb-6" style={{ borderColor: allTested ? "#BBF7D0" : "#DDE4ED" }}>
+      <div className="rounded-2xl overflow-hidden mb-6"
+        style={{ background: "#161B27", border: `1px solid ${allTested ? "rgba(34,197,94,0.2)" : "#1E2535"}` }}>
 
-        {/* Header row — always visible */}
+        {/* Collapsed header */}
         <div
-          className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-between px-5 py-4 cursor-pointer transition-colors"
+          style={{ borderBottom: expanded ? "1px solid #1E2535" : "none" }}
           onClick={() => setExpanded(e => !e)}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#1A2236"}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
         >
           <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: allTested ? "#DCFCE7" : "#FEF3C7" }}
-            >
-              <FlaskConical size={15} style={{ color: allTested ? "#16A34A" : "#D97706" }} />
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: allTested ? "rgba(34,197,94,0.12)" : "rgba(245,158,11,0.12)" }}>
+              <FlaskConical size={15} style={{ color: allTested ? "#22C55E" : "#F59E0B" }} />
             </div>
             <div>
-              <p className="text-sm font-bold" style={{ color: "#0B1F3A" }}>Weekly Drug Testing</p>
-              <p className="text-xs" style={{ color: "#94A3B8" }}>
-                Week of {formatDate(monday)} – {formatDate(sunday)}
+              <p className="text-sm font-bold" style={{ color: "#E6EDF3" }}>Weekly Drug Testing</p>
+              <p className="text-xs" style={{ color: "#4A6380" }}>
+                {formatDate(monday)} – {formatDate(sunday)}
                 {" · "}
-                <span style={{ color: allTested ? "#16A34A" : "#D97706", fontWeight: 600 }}>
+                <span style={{ color: allTested ? "#22C55E" : "#F59E0B", fontWeight: 600 }}>
                   {testedCount}/{totalCount} tested
                 </span>
               </p>
@@ -231,138 +217,113 @@ export default function WeeklyDrugTests({ homeId }: Props) {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Compact progress bar */}
             <div className="hidden sm:flex items-center gap-2">
-              <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: "#EEF2F7" }}>
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${progressPct}%`, background: allTested ? "#16A34A" : "#D97706" }}
-                />
+              <div className="w-24 h-1.5 rounded-full overflow-hidden" style={{ background: "#1E2535" }}>
+                <div className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${progressPct}%`, background: barColor, boxShadow: `0 0 4px ${barColor}66` }} />
               </div>
-              <span className="text-xs font-bold" style={{ color: allTested ? "#16A34A" : "#D97706" }}>
-                {progressPct}%
-              </span>
+              <span className="text-xs font-bold" style={{ color: barColor }}>{progressPct}%</span>
             </div>
-            {expanded ? <ChevronUp size={16} style={{ color: "#94A3B8" }} /> : <ChevronDown size={16} style={{ color: "#94A3B8" }} />}
+            {expanded
+              ? <ChevronUp size={16} style={{ color: "#4A6380" }} />
+              : <ChevronDown size={16} style={{ color: "#4A6380" }} />}
           </div>
         </div>
 
-        {/* Expanded content */}
+        {/* Expanded body */}
         {expanded && (
-          <div>
-            <div className="px-5 pb-2 border-t" style={{ borderColor: "#F1F5F9" }}>
+          <div className="px-5 pb-4">
 
-              {/* Action buttons */}
-              <div className="flex items-center gap-2 py-4 flex-wrap">
-                {!sessionActive ? (
-                  <Button
-                    onClick={() => setSessionActive(true)}
-                    className="gap-2 font-semibold"
-                    style={{ background: "#0284C7", color: "white" }}
-                  >
-                    <FlaskConical size={14} />
-                    Start Testing Session
+            {/* Action buttons */}
+            <div className="flex items-center gap-2 py-4 flex-wrap">
+              {!sessionActive ? (
+                <Button onClick={() => setSessionActive(true)} className="gap-2 font-semibold"
+                  style={{ background: "#3B82F6", color: "white" }}>
+                  <FlaskConical size={14} />
+                  Start Testing Session
+                </Button>
+              ) : (
+                <>
+                  <Button onClick={() => setBulkConfirmOpen(true)} disabled={allTested}
+                    className="gap-2 font-semibold" style={{ background: "#22C55E", color: "white" }}>
+                    <Check size={14} strokeWidth={2.5} />
+                    Mark Everyone Tested (All Negative)
                   </Button>
-                ) : (
-                  <>
-                    <Button
-                      onClick={() => setBulkConfirmOpen(true)}
-                      disabled={allTested}
-                      className="gap-2 font-semibold"
-                      style={{ background: "#16A34A", color: "white" }}
-                    >
-                      <Check size={14} strokeWidth={2.5} />
-                      Mark Everyone Tested (All Negative)
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setSessionActive(false)}
-                      className="text-xs"
-                    >
-                      End Session
-                    </Button>
-                  </>
-                )}
-              </div>
-
-              {/* Resident list */}
-              <div className="space-y-2 pb-4">
-                {residents.map(r => {
-                  const rs = resultStyle(r.testResult);
-                  return (
-                    <div
-                      key={r.id}
-                      className="flex items-center gap-3 rounded-xl px-4 py-3 border"
-                      style={{ borderColor: r.testedThisWeek ? (r.testResult === "Positive" ? "#FECACA" : "#BBF7D0") : "#E2E8F0" }}
-                    >
-                      {/* Status dot */}
-                      <div
-                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                        style={{ background: r.testedThisWeek ? rs.dot : "#CBD5E1" }}
-                      />
-
-                      {/* Name + room */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold" style={{ color: "#0B1F3A" }}>{r.full_name}</p>
-                        {r.room_number && (
-                          <p className="text-xs" style={{ color: "#94A3B8" }}>Room {r.room_number}</p>
-                        )}
-                      </div>
-
-                      {/* Result badge or "Not tested" */}
-                      {r.testedThisWeek ? (
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span
-                            className="text-xs font-bold px-2.5 py-1 rounded-full"
-                            style={{ background: rs.bg, color: rs.text }}
-                          >
-                            {r.testResult}
-                            {r.testResult === "Positive" && r.testSubstance && ` — ${r.testSubstance}`}
-                          </span>
-                          {/* Allow editing if in session */}
-                          {sessionActive && (
-                            <button
-                              onClick={() => openLog(r)}
-                              className="text-xs underline flex-shrink-0"
-                              style={{ color: "#94A3B8" }}
-                            >
-                              Edit
-                            </button>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-xs font-medium flex items-center gap-1" style={{ color: "#94A3B8" }}>
-                            <Clock size={12} />
-                            Not tested
-                          </span>
-                          {/* Show Test button only during active session */}
-                          {sessionActive && (
-                            <Button
-                              onClick={() => openLog(r)}
-                              className="h-7 px-3 text-xs font-semibold"
-                              style={{ background: "#0284C7", color: "white" }}
-                            >
-                              Log Test
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* All tested success state */}
-              {allTested && (
-                <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4">
-                  <CheckCircle size={15} className="text-green-600" />
-                  <p className="text-sm font-semibold text-green-700">
-                    All residents tested this week
-                  </p>
-                </div>
+                  <Button variant="outline" onClick={() => setSessionActive(false)} className="text-xs">
+                    End Session
+                  </Button>
+                </>
               )}
             </div>
+
+            {/* Resident rows */}
+            <div className="space-y-2">
+              {residents.map(r => {
+                const rs = resultStyle(r.testResult);
+                return (
+                  <div key={r.id} className="flex items-center gap-3 rounded-xl px-4 py-3"
+                    style={{
+                      background: "#1A2236",
+                      border: `1px solid ${r.testedThisWeek
+                        ? (r.testResult === "Positive" ? "rgba(239,68,68,0.2)" : "rgba(34,197,94,0.15)")
+                        : "#1E2535"}`,
+                    }}>
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{
+                        background: r.testedThisWeek ? rs.dot : "#2A3448",
+                        boxShadow: r.testedThisWeek ? `0 0 5px ${rs.glow}` : "none",
+                      }} />
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold" style={{ color: "#E6EDF3" }}>{r.full_name}</p>
+                      {r.room_number && (
+                        <p className="text-xs" style={{ color: "#4A6380" }}>Room {r.room_number}</p>
+                      )}
+                    </div>
+
+                    {r.testedThisWeek ? (
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-full"
+                          style={{ background: rs.bg, color: rs.text }}>
+                          {r.testResult}
+                          {r.testResult === "Positive" && r.testSubstance && ` — ${r.testSubstance}`}
+                        </span>
+                        {sessionActive && (
+                          <button onClick={() => openLog(r)} className="text-xs underline flex-shrink-0"
+                            style={{ color: "#4A6380" }}>
+                            Edit
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-xs font-medium flex items-center gap-1" style={{ color: "#4A6380" }}>
+                          <Clock size={12} />
+                          Not tested
+                        </span>
+                        {sessionActive && (
+                          <Button onClick={() => openLog(r)} className="h-7 px-3 text-xs font-semibold"
+                            style={{ background: "#3B82F6", color: "white" }}>
+                            Log Test
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* All tested banner */}
+            {allTested && (
+              <div className="flex items-center gap-2 rounded-xl px-4 py-3 mt-3"
+                style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)" }}>
+                <CheckCircle size={15} style={{ color: "#22C55E" }} />
+                <p className="text-sm font-semibold" style={{ color: "#22C55E" }}>
+                  All residents tested this week
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -371,31 +332,32 @@ export default function WeeklyDrugTests({ homeId }: Props) {
       <Dialog open={bulkConfirmOpen} onOpenChange={setBulkConfirmOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold" style={{ color: "#0B1F3A" }}>
+            <DialogTitle className="text-lg font-bold" style={{ color: "#E6EDF3" }}>
               Mark Everyone Tested?
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-1">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm" style={{ color: "#1D4ED8" }}>
-              <p className="font-semibold mb-1">This will log for {residents.filter(r => !r.testedThisWeek).length} resident(s):</p>
+            <div className="rounded-xl p-4 text-sm"
+              style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)", color: "#60A5FA" }}>
+              <p className="font-semibold mb-1">
+                This will log for {residents.filter(r => !r.testedThisWeek).length} resident(s):
+              </p>
               <ul className="space-y-0.5 text-xs">
                 {residents.filter(r => !r.testedThisWeek).map(r => (
                   <li key={r.id}>• {r.full_name}</li>
                 ))}
               </ul>
               <p className="mt-2 text-xs">Result: <strong>Negative</strong> · Date: <strong>Today</strong></p>
-              <p className="mt-1 text-xs" style={{ color: "#3B82F6" }}>
-                If anyone tested positive, click Cancel and log them individually so you can record the substance.
+              <p className="mt-1 text-xs opacity-75">
+                Log anyone positive individually to record the substance.
               </p>
             </div>
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => setBulkConfirmOpen(false)}>Cancel</Button>
-              <Button
-                className="flex-1 font-semibold gap-1.5"
-                style={{ background: "#16A34A", color: "white" }}
+              <Button className="flex-1 font-semibold gap-1.5"
+                style={{ background: "#22C55E", color: "white" }}
                 disabled={bulkLoading}
-                onClick={markAllTested}
-              >
+                onClick={markAllTested}>
                 <Check size={14} strokeWidth={2.5} />
                 {bulkLoading ? "Saving..." : "Confirm — All Negative"}
               </Button>
@@ -404,37 +366,31 @@ export default function WeeklyDrugTests({ homeId }: Props) {
         </DialogContent>
       </Dialog>
 
-      {/* Individual test log dialog */}
+      {/* Individual test dialog */}
       <Dialog open={logOpen} onOpenChange={setLogOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold" style={{ color: "#0B1F3A" }}>
+            <DialogTitle className="text-lg font-bold" style={{ color: "#E6EDF3" }}>
               Log Drug Test — {logTarget?.name}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={saveTest} className="space-y-4 mt-1">
 
-            {/* Result */}
+            {/* Result selector */}
             <div className="space-y-1.5">
-              <Label>Result <span className="text-red-500">*</span></Label>
+              <Label>Result <span style={{ color: "#EF4444" }}>*</span></Label>
               <div className="grid grid-cols-2 gap-2">
                 {["Negative", "Positive", "Refused", "Inconclusive"].map(opt => {
                   const selected = logForm.result === opt;
-                  const colors: Record<string, { bg: string; border: string; text: string }> = {
-                    Negative: { bg: "#DCFCE7", border: "#16A34A", text: "#15803D" },
-                    Positive: { bg: "#FEE2E2", border: "#DC2626", text: "#DC2626" },
-                    Refused: { bg: "#FEF3C7", border: "#D97706", text: "#D97706" },
-                    Inconclusive: { bg: "#F1F5F9", border: "#94A3B8", text: "#64748B" },
-                  };
-                  const c = colors[opt];
+                  const rs = resultStyle(opt);
                   return (
-                    <button
-                      key={opt}
-                      type="button"
+                    <button key={opt} type="button"
                       onClick={() => setLogForm(f => ({ ...f, result: opt, substance: "" }))}
                       className="py-2.5 rounded-xl text-sm font-semibold border-2 transition-all"
-                      style={selected ? { background: c.bg, borderColor: c.border, color: c.text } : { background: "white", borderColor: "#E2E8F0", color: "#64748B" }}
-                    >
+                      style={selected
+                        ? { background: rs.bg, borderColor: rs.dot, color: rs.text }
+                        : { background: "#1A2236", borderColor: "#1E2535", color: "#4A6380" }
+                      }>
                       {opt}
                     </button>
                   );
@@ -442,18 +398,18 @@ export default function WeeklyDrugTests({ homeId }: Props) {
               </div>
             </div>
 
-            {/* Substance — only shown for Positive */}
+            {/* Substance (Positive only) */}
             {logForm.result === "Positive" && (
               <div className="space-y-1.5">
-                <Label>Substance / Drug <span className="text-red-500">*</span></Label>
+                <Label>Substance / Drug <span style={{ color: "#EF4444" }}>*</span></Label>
                 <Input
                   value={logForm.substance}
                   onChange={e => setLogForm(f => ({ ...f, substance: e.target.value }))}
                   placeholder="e.g. Methamphetamine, Opioids, THC..."
                   required={logForm.result === "Positive"}
                 />
-                <p className="text-xs" style={{ color: "#DC2626" }}>
-                  ⚠ Resident will automatically be flagged Red.
+                <p className="text-xs" style={{ color: "#EF4444" }}>
+                  ⚠ Resident will be flagged Red automatically.
                 </p>
               </div>
             )}
@@ -466,8 +422,8 @@ export default function WeeklyDrugTests({ homeId }: Props) {
                 onChange={e => setLogForm(f => ({ ...f, notes: e.target.value }))}
                 placeholder="Any additional notes..."
                 rows={2}
-                className="w-full border rounded-md px-3 py-2 text-sm outline-none resize-none"
-                style={{ borderColor: "#DDE4ED" }}
+                className="w-full rounded-md px-3 py-2 text-sm outline-none resize-none"
+                style={{ background: "#1A2236", border: "1px solid #1E2535", color: "#E6EDF3" }}
               />
             </div>
 
@@ -482,13 +438,11 @@ export default function WeeklyDrugTests({ homeId }: Props) {
             </div>
 
             <div className="flex gap-3 pt-1">
-              <Button type="button" variant="outline" className="flex-1" onClick={() => setLogOpen(false)}>Cancel</Button>
-              <Button
-                type="submit"
-                disabled={logLoading}
-                className="flex-1 font-semibold"
-                style={{ background: logForm.result === "Positive" ? "#DC2626" : "#0284C7", color: "white" }}
-              >
+              <Button type="button" variant="outline" className="flex-1" onClick={() => setLogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={logLoading} className="flex-1 font-semibold"
+                style={{ background: logForm.result === "Positive" ? "#EF4444" : "#3B82F6", color: "white" }}>
                 {logLoading ? "Saving..." : "Save Test"}
               </Button>
             </div>

@@ -35,50 +35,49 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-xl: calc(var(--radius) * 1.5);
+  --radius-2xl: calc(var(--radius) * 2);
 }
 
 :root {
-  /* Managr — Deep Navy + Sky Blue */
-  --background: #F0F4F8;
-  --foreground: #0B1F3A;
-  --card: #FFFFFF;
-  --card-foreground: #0B1F3A;
-  --popover: #FFFFFF;
-  --popover-foreground: #0B1F3A;
-  --primary: #0284C7;
+  /* Managr — NeuroBank-inspired deep dark theme */
+  --background: #090B14;
+  --foreground: #F1F5F9;
+  --card: #0F1523;
+  --card-foreground: #F1F5F9;
+  --popover: #131929;
+  --popover-foreground: #F1F5F9;
+  --primary: #3B82F6;
   --primary-foreground: #FFFFFF;
-  --secondary: #E8F4FD;
-  --secondary-foreground: #0B1F3A;
-  --muted: #EEF2F7;
-  --muted-foreground: #64748B;
-  --accent: #0284C7;
+  --secondary: #131929;
+  --secondary-foreground: #94A3B8;
+  --muted: #131929;
+  --muted-foreground: #475569;
+  --accent: #3B82F6;
   --accent-foreground: #FFFFFF;
-  --destructive: #DC2626;
-  --border: #DDE4ED;
-  --input: #DDE4ED;
-  --ring: #0284C7;
+  --destructive: #EF4444;
+  --border: rgba(255, 255, 255, 0.06);
+  --input: #131929;
+  --ring: #3B82F6;
   --radius: 0.75rem;
 
   /* Sidebar */
-  --sidebar: #0B1F3A;
-  --sidebar-foreground: #E2EAF4;
-  --sidebar-primary: #38BDF8;
-  --sidebar-primary-foreground: #0B1F3A;
-  --sidebar-accent: #132D50;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #132D50;
-  --sidebar-ring: #38BDF8;
+  --sidebar: #090B14;
+  --sidebar-foreground: #475569;
+  --sidebar-primary: #3B82F6;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #0F1523;
+  --sidebar-accent-foreground: #F1F5F9;
+  --sidebar-border: rgba(255, 255, 255, 0.05);
+  --sidebar-ring: #3B82F6;
 
-  /* Status flags */
-  --flag-green: #16A34A;
-  --flag-yellow: #D97706;
-  --flag-red: #DC2626;
-  --attention: #7C3AED;
+  /* Status */
+  --flag-green: #22C55E;
+  --flag-yellow: #EAB308;
+  --flag-red: #EF4444;
 }
 
 @layer base {
@@ -98,25 +97,88 @@
     font-weight: 700;
     letter-spacing: -0.025em;
   }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
 }
 
 @layer utilities {
-  .card-hover {
-    transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+  /* Standard card — matches reference */
+  .dash-card {
+    background: #0F1523;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0.875rem;
+    transition: border-color 0.2s ease;
   }
-  .card-hover:hover {
-    box-shadow: 0 6px 24px rgba(2, 132, 199, 0.1);
-    transform: translateY(-2px);
-    border-color: #BAD9F5;
+  .dash-card:hover {
+    border-color: rgba(59, 130, 246, 0.2);
   }
-  .btn-primary {
-    background: #0284C7;
-    color: white;
+
+  /* Gradient card — like AI Insights in reference */
+  .gradient-card {
+    background: linear-gradient(135deg,
+      #0F1523 0%,
+      #0F2756 25%,
+      #1E3A8A 50%,
+      #1E1B4B 75%,
+      #0F1523 100%
+    );
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 0.875rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .gradient-card::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -20%;
+    width: 60%;
+    height: 80%;
+    background: radial-gradient(ellipse at center,
+      rgba(59, 130, 246, 0.25) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+
+  /* Row hover */
+  .row-hover { transition: background 0.12s ease; }
+  .row-hover:hover { background: rgba(255,255,255,0.03); }
+
+  /* Card label */
+  .card-label {
+    font-size: 0.65rem;
     font-weight: 600;
-    transition: background 0.15s ease, box-shadow 0.15s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #475569;
   }
-  .btn-primary:hover {
-    background: #0369A1;
-    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+
+  /* Fade in */
+  .fade-in {
+    animation: fadeIn 0.3s ease-out both;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Flag dot */
+  .flag-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Status badge */
+  .status-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    letter-spacing: 0.03em;
   }
 }

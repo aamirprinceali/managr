@@ -152,6 +152,25 @@ CREATE TABLE IF NOT EXISTS restrictions (
   created_at TIMESTAMPTZ DEFAULT now()
 );`,
   },
+  {
+    number: 5,
+    title: "Create the nightly reports table",
+    sql: `CREATE TABLE IF NOT EXISTS nightly_reports (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  home_id UUID REFERENCES homes(id) ON DELETE CASCADE,
+  submitted_by UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  submitted_at TIMESTAMPTZ DEFAULT now(),
+  all_residents_accounted BOOLEAN DEFAULT true,
+  incidents_tonight BOOLEAN DEFAULT false,
+  incident_notes TEXT,
+  medications_given BOOLEAN DEFAULT true,
+  medication_notes TEXT,
+  curfew_violations BOOLEAN DEFAULT false,
+  curfew_notes TEXT,
+  general_notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);`,
+  },
 ];
 
 type SeedStatus = "idle" | "running" | "done" | "error";

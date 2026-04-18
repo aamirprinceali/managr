@@ -25,22 +25,26 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    if (mode === "signin") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) { setError(error.message); setLoading(false); return; }
-    } else {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) { setError(error.message); setLoading(false); return; }
+    try {
+      if (mode === "signin") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) { setError(error.message); setLoading(false); return; }
+      } else {
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) { setError(error.message); setLoading(false); return; }
+      }
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Can't reach the server. Your Supabase project may be paused — check app.supabase.com and click Resume.");
+      setLoading(false);
     }
-
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: "#0B1F3A" }}
+      style={{ background: "#080F1E" }}
     >
       <div className="w-full max-w-sm">
 
@@ -48,26 +52,26 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-8">
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: "#0284C7" }}
+            style={{ background: "linear-gradient(135deg, #3B82F6, #1D4ED8)" }}
           >
             <Shield size={26} className="text-white" strokeWidth={2.5} />
           </div>
           <h1 className="text-white text-2xl font-bold tracking-tight">Managr</h1>
-          <p className="text-sm mt-1" style={{ color: "#4A7FA8" }}>Recovery Housing Operations</p>
+          <p className="text-sm mt-1" style={{ color: "#4A6380" }}>Recovery Housing Operations</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl p-6 shadow-2xl">
+        <div className="rounded-2xl p-6" style={{ background: "#161B27", border: "1px solid #1E2535" }}>
           {/* Mode toggle */}
-          <div className="flex rounded-xl p-1 mb-6" style={{ background: "#EEF2F7" }}>
+          <div className="flex rounded-xl p-1 mb-6" style={{ background: "#111827" }}>
             {(["signin", "signup"] as const).map(m => (
               <button
                 key={m}
                 onClick={() => { setMode(m); setError(""); }}
                 className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-150"
                 style={mode === m
-                  ? { background: "white", color: "#0B1F3A", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }
-                  : { color: "#94A3B8" }
+                  ? { background: "#1E2D45", color: "#E6EDF3", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }
+                  : { color: "#4A6380" }
                 }
               >
                 {m === "signin" ? "Sign In" : "Create Account"}
@@ -114,7 +118,8 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <p className="text-sm rounded-lg px-3 py-2"
+                style={{ color: "#EF4444", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}>
                 {error}
               </p>
             )}
@@ -123,7 +128,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               className="w-full font-bold py-3"
-              style={{ background: "#0284C7", color: "white" }}
+              style={{ background: "#3B82F6", color: "white" }}
             >
               {loading
                 ? "Please wait..."
@@ -132,13 +137,13 @@ export default function LoginPage() {
           </form>
 
           {mode === "signup" && (
-            <p className="text-xs text-center mt-4" style={{ color: "#94A3B8" }}>
+            <p className="text-xs text-center mt-4" style={{ color: "#4A6380" }}>
               The first account created becomes the owner account.
             </p>
           )}
         </div>
 
-        <p className="text-center text-xs mt-4" style={{ color: "#3A6080" }}>
+        <p className="text-center text-xs mt-4" style={{ color: "#2A3448" }}>
           Managr · Recovery Housing Management
         </p>
       </div>

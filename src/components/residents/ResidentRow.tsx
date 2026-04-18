@@ -1,8 +1,5 @@
-// A single resident row shown on the Home Dashboard
-// Tapping it takes you to the full Resident Profile
+// A single resident row shown on the Home Dashboard — dark premium style
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 
 type ResidentRowProps = {
@@ -15,51 +12,69 @@ type ResidentRowProps = {
   sobrietyDate: string | null;
 };
 
-// Flag color → colored dot
-const flagDot: Record<string, string> = {
-  Green: "bg-green-500",
-  Yellow: "bg-yellow-400",
-  Red: "bg-red-500",
+// Flag dot glow colors
+const flagColors: Record<string, { dot: string; glow: string }> = {
+  Green: { dot: "#22C55E", glow: "rgba(34,197,94,0.5)" },
+  Yellow: { dot: "#F59E0B", glow: "rgba(245,158,11,0.5)" },
+  Red: { dot: "#EF4444", glow: "rgba(239,68,68,0.5)" },
 };
 
-// Status badge styling
-const statusStyle: Record<string, string> = {
-  Active: "bg-green-100 text-green-800 border-green-200",
-  "On Pass": "bg-blue-100 text-blue-800 border-blue-200",
-  Discharged: "bg-gray-100 text-gray-600 border-gray-200",
+// Status badge styling for dark theme
+const statusStyle: Record<string, { bg: string; text: string; border: string }> = {
+  Active: { bg: "rgba(34,197,94,0.1)", text: "#22C55E", border: "rgba(34,197,94,0.2)" },
+  "On Pass": { bg: "rgba(59,130,246,0.1)", text: "#60A5FA", border: "rgba(59,130,246,0.2)" },
+  Discharged: { bg: "rgba(74,99,128,0.1)", text: "#4A6380", border: "rgba(74,99,128,0.2)" },
 };
 
 export default function ResidentRow({ id, homeId, fullName, status, flag, points, sobrietyDate }: ResidentRowProps) {
-  // Calculate how many days sober based on their sobriety date
   const daysSober = sobrietyDate
     ? Math.floor((Date.now() - new Date(sobrietyDate).getTime()) / (1000 * 60 * 60 * 24))
     : null;
 
+  const flagStyle = flagColors[flag] ?? { dot: "#4A6380", glow: "rgba(74,99,128,0.3)" };
+  const sBadge = statusStyle[status] ?? { bg: "rgba(74,99,128,0.1)", text: "#4A6380", border: "rgba(74,99,128,0.2)" };
+  const isRed = flag === "Red";
+
   return (
     <Link href={`/homes/${homeId}/residents/${id}`}>
-      <div className="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:shadow-sm hover:border-gray-300 transition-all cursor-pointer group">
-        {/* Flag color dot — Green/Yellow/Red at a glance */}
-        <div className={cn("w-3 h-3 rounded-full flex-shrink-0 ring-2 ring-white shadow", flagDot[flag] ?? "bg-gray-300")} />
+      <div
+        className="flex items-center gap-4 p-4 rounded-xl cursor-pointer group transition-all duration-150"
+        style={{
+          background: "#161B27",
+          border: `1px solid ${isRed ? "rgba(239,68,68,0.2)" : "#1E2535"}`,
+        }}
+        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#1A2236"}
+        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "#161B27"}
+      >
+        {/* Flag dot with glow */}
+        <div
+          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+          style={{
+            background: flagStyle.dot,
+            boxShadow: `0 0 6px ${flagStyle.glow}`,
+          }}
+        />
 
-        {/* Resident name + stats */}
+        {/* Name + stats */}
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-900 truncate group-hover:text-amber-700 transition-colors">
+          <p className="font-semibold truncate transition-colors" style={{ color: "#E6EDF3" }}>
             {fullName}
           </p>
           <div className="flex items-center gap-2 mt-0.5">
             {daysSober !== null && (
-              <span className="text-xs text-gray-400">{daysSober}d sober</span>
+              <span className="text-xs" style={{ color: "#4A6380" }}>{daysSober}d sober</span>
             )}
-            <span className="text-xs text-gray-400">· {points} pts</span>
+            <span className="text-xs" style={{ color: "#4A6380" }}>· {points} pts</span>
           </div>
         </div>
 
         {/* Status badge */}
-        <Badge className={cn("flex-shrink-0 text-xs border font-medium", statusStyle[status] ?? "bg-gray-100 text-gray-600 border-gray-200")}>
+        <span className="flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full"
+          style={{ background: sBadge.bg, color: sBadge.text, border: `1px solid ${sBadge.border}` }}>
           {status}
-        </Badge>
+        </span>
 
-        <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
+        <ChevronRight size={15} style={{ color: "#2A3448" }} className="flex-shrink-0" />
       </div>
     </Link>
   );

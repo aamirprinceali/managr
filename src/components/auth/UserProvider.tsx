@@ -34,67 +34,60 @@ export function useProfile() {
   return useContext(UserContext);
 }
 
+// ✅ DEV BYPASS — fake owner profile so all pages render without Supabase auth
+// To restore real auth: comment out this component and uncomment the real one below
+export default function UserProvider({ children }: { children: ReactNode }) {
+  const fakeProfile: Profile = {
+    id: "dev-user",
+    role: "owner",
+    home_id: null,
+    full_name: "Mike (Dev Mode)",
+    email: "mike@lighthouse.com",
+  };
+
+  const signOut = async () => { window.location.href = "/login"; };
+
+  return (
+    <UserContext.Provider value={{ user: null, profile: fakeProfile, loading: false, signOut }}>
+      {children}
+    </UserContext.Provider>
+  );
+}
+
+/* 🔒 REAL AUTH PROVIDER — uncomment when ready to go live
 export default function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-
   const supabase = createClient();
 
   useEffect(() => {
-    // Get the user on first load
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
       if (user) fetchOrCreateProfile(user.id, user.email ?? "");
       else setLoading(false);
     });
-
-    // Listen for login/logout events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       if (currentUser) fetchOrCreateProfile(currentUser.id, currentUser.email ?? "");
       else { setProfile(null); setLoading(false); }
     });
-
     return () => subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function fetchOrCreateProfile(userId: string, email: string) {
-    // Try to get existing profile
-    const { data: existing } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (existing) {
-      setProfile(existing as Profile);
-      setLoading(false);
-      return;
-    }
-
-    // No profile yet — first user gets 'owner', everyone else gets 'manager'
-    const { count } = await supabase
-      .from("profiles")
-      .select("*", { count: "exact", head: true });
-
+    const { data: existing } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+    if (existing) { setProfile(existing as Profile); setLoading(false); return; }
+    const { count } = await supabase.from("profiles").select("*", { count: "exact", head: true });
     const role: UserRole = (count === 0) ? "owner" : "manager";
-
-    const { data: newProfile } = await supabase
-      .from("profiles")
-      .insert({ id: userId, role, email })
-      .select()
-      .single();
-
+    const { data: newProfile } = await supabase.from("profiles").insert({ id: userId, role, email }).select().single();
     setProfile(newProfile as Profile ?? null);
     setLoading(false);
   }
 
-  async function signOut() {
-    await supabase.auth.signOut();
-  }
+  async function signOut() { await supabase.auth.signOut(); }
 
   return (
     <UserContext.Provider value={{ user, profile, loading, signOut }}>
@@ -102,3 +95,4 @@ export default function UserProvider({ children }: { children: ReactNode }) {
     </UserContext.Provider>
   );
 }
+*/

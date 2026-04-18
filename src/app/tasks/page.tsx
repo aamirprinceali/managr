@@ -52,23 +52,16 @@ export default function TasksPage() {
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
-    // Load homes for filter + form
     const { data: homeData } = await supabase.from("homes").select("id, name").order("name");
     setHomes(homeData ?? []);
 
-    // Load tasks — graceful if table doesn't exist
     const { data: taskData, error } = await supabase
       .from("tasks")
       .select("*")
       .order("due_date", { ascending: true, nullsFirst: false });
 
-    if (error) {
-      setTableExists(false);
-      setLoading(false);
-      return;
-    }
+    if (error) { setTableExists(false); setLoading(false); return; }
 
-    // Merge home names into tasks
     const nameMap: Record<string, string> = {};
     (homeData ?? []).forEach((h: Home) => { nameMap[h.id] = h.name; });
 
@@ -104,7 +97,6 @@ export default function TasksPage() {
     setSelected(prev => { const n = new Set(prev); n.delete(id); return n; });
   }
 
-  // Mark all selected tasks as done at once
   async function markSelectedDone() {
     const ids = Array.from(selected);
     if (ids.length === 0) return;
@@ -114,22 +106,16 @@ export default function TasksPage() {
     setSelected(new Set());
   }
 
-  // Toggle one task in the selection
   function toggleSelect(id: string) {
-    setSelected(prev => {
-      const n = new Set(prev);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
-    });
+    setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   }
 
-  // Select / deselect all visible pending tasks
   function toggleSelectAll() {
     const pendingIds = filtered.filter(t => t.status !== "Done").map(t => t.id);
     if (pendingIds.every(id => selected.has(id))) {
-      setSelected(new Set()); // deselect all
+      setSelected(new Set());
     } else {
-      setSelected(new Set(pendingIds)); // select all
+      setSelected(new Set(pendingIds));
     }
   }
 
@@ -138,47 +124,39 @@ export default function TasksPage() {
     setTasks(prev => prev.filter(t => t.id !== id));
   }
 
-  // Bulk drug test — creates one "Drug Test" task per active resident
   async function bulkDrugTest() {
     setBulkLoading(true);
     const { data: residents } = await supabase
-      .from("residents")
-      .select("id, full_name, home_id")
-      .eq("is_archived", false)
-      .eq("status", "Active");
+      .from("residents").select("id, full_name, home_id")
+      .eq("is_archived", false).eq("status", "Active");
 
     if (residents && residents.length > 0) {
       const nameMap: Record<string, string> = {};
       homes.forEach(h => { nameMap[h.id] = h.name; });
-
       const inserts = (residents as { id: string; full_name: string; home_id: string }[]).map(r => ({
         title: `Drug Test — ${r.full_name}`,
-        type: "Drug Test",
-        priority: "High",
-        status: "Pending",
-        home_id: r.home_id,
-        due_date: today,
+        type: "Drug Test", priority: "High", status: "Pending",
+        home_id: r.home_id, due_date: today,
         description: `Bulk drug test flagged for ${r.full_name}`,
       }));
-
       await supabase.from("tasks").insert(inserts);
       loadData();
     }
     setBulkLoading(false);
   }
 
-  const priorityColor = (p: string) => {
-    if (p === "Urgent") return "bg-red-100 text-red-700";
-    if (p === "High") return "bg-amber-100 text-amber-700";
-    if (p === "Medium") return "bg-blue-100 text-blue-700";
-    return "bg-slate-100 text-slate-600";
+  const priorityStyle = (p: string) => {
+    if (p === "Urgent") return { background: "rgba(239,68,68,0.15)", color: "#F87171" };
+    if (p === "High") return { background: "rgba(245,158,11,0.15)", color: "#FCD34D" };
+    if (p === "Medium") return { background: "rgba(59,130,246,0.15)", color: "#60A5FA" };
+    return { background: "rgba(100,116,139,0.15)", color: "#94A3B8" };
   };
 
-  const typeColor = (t: string) => {
-    if (t === "Drug Test") return "bg-purple-100 text-purple-700";
-    if (t === "Alert") return "bg-red-100 text-red-600";
-    if (t === "Chore") return "bg-green-100 text-green-700";
-    return "bg-gray-100 text-gray-600";
+  const typeStyle = (t: string) => {
+    if (t === "Drug Test") return { background: "rgba(168,85,247,0.15)", color: "#C084FC" };
+    if (t === "Alert") return { background: "rgba(239,68,68,0.15)", color: "#F87171" };
+    if (t === "Chore") return { background: "rgba(34,197,94,0.15)", color: "#4ADE80" };
+    return { background: "rgba(100,116,139,0.15)", color: "#94A3B8" };
   };
 
   const filtered = tasks.filter(t => {
@@ -193,17 +171,17 @@ export default function TasksPage() {
   if (!tableExists) {
     return (
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-2" style={{ color: "#0B1F3A" }}>Tasks</h1>
-        <div className="bg-white border border-amber-200 rounded-2xl p-8 text-center">
-          <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle size={22} className="text-amber-500" />
+        <h1 className="text-xl font-semibold mb-2" style={{ color: "#F1F5F9" }}>Tasks</h1>
+        <div className="dash-card p-8 text-center">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(245,158,11,0.1)" }}>
+            <AlertTriangle size={22} style={{ color: "#FCD34D" }} />
           </div>
-          <h3 className="font-bold text-lg mb-2" style={{ color: "#0B1F3A" }}>Tasks table not set up yet</h3>
-          <p className="text-sm mb-4" style={{ color: "#64748B" }}>
-            You need to create the <code className="bg-gray-100 px-1 rounded">tasks</code> table in Supabase before using this page.
+          <h3 className="font-semibold text-base mb-2" style={{ color: "#F1F5F9" }}>Tasks table not set up yet</h3>
+          <p className="text-sm mb-4" style={{ color: "#475569" }}>
+            Create the <code className="px-1 rounded" style={{ background: "#131929", color: "#94A3B8" }}>tasks</code> table in Supabase first.
           </p>
           <Link href="/seed">
-            <Button style={{ background: "#0284C7", color: "white" }}>Go to Setup Page</Button>
+            <Button style={{ background: "#3B82F6", color: "white" }}>Go to Setup Page</Button>
           </Link>
         </div>
       </div>
@@ -215,42 +193,45 @@ export default function TasksPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#0B1F3A" }}>Tasks</h1>
-          <p className="text-sm mt-0.5" style={{ color: "#64748B" }}>
+          <h1 className="text-xl font-semibold tracking-tight" style={{ color: "#F1F5F9" }}>Tasks</h1>
+          <p className="text-sm mt-0.5" style={{ color: "#475569" }}>
             {pendingCount} pending
-            {overdueCount > 0 && <span className="text-red-500 font-semibold"> · {overdueCount} overdue</span>}
+            {overdueCount > 0 && <span className="font-semibold" style={{ color: "#F87171" }}> · {overdueCount} overdue</span>}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Bulk drug test button */}
           <Button
             variant="outline"
-            className="gap-2 font-semibold border-purple-200 text-purple-700 hover:bg-purple-50"
+            className="gap-2 font-medium text-xs h-8 px-3"
+            style={{ borderColor: "rgba(168,85,247,0.3)", color: "#C084FC", background: "rgba(168,85,247,0.08)" }}
             onClick={bulkDrugTest}
             disabled={bulkLoading}
           >
-            <FlaskConical size={15} />
+            <FlaskConical size={13} />
             {bulkLoading ? "Flagging..." : "Bulk Drug Test"}
           </Button>
-          <Button onClick={() => setAddOpen(true)} className="gap-2 font-semibold" style={{ background: "#0284C7", color: "white" }}>
-            <Plus size={15} strokeWidth={2.5} />
+          <Button
+            onClick={() => setAddOpen(true)}
+            className="gap-2 font-medium text-xs h-8 px-3"
+            style={{ background: "#3B82F6", color: "white" }}
+          >
+            <Plus size={13} strokeWidth={2.5} />
             Add Task
           </Button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
-        {/* Status filter tabs */}
-        <div className="flex items-center rounded-lg p-0.5 gap-0.5" style={{ background: "#EEF2F7" }}>
+      <div className="flex items-center gap-3 mb-5 flex-wrap">
+        <div className="flex items-center rounded-lg p-0.5 gap-0.5" style={{ background: "#0F1523" }}>
           {STATUS_FILTERS.map(s => (
             <button
               key={s}
               onClick={() => setFilterStatus(s)}
-              className="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-150"
+              className="px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150"
               style={filterStatus === s
-                ? { background: "white", color: "#0B1F3A", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }
-                : { color: "#94A3B8" }
+                ? { background: "#131929", color: "#F1F5F9" }
+                : { color: "#334155" }
               }
             >
               {s}
@@ -258,13 +239,12 @@ export default function TasksPage() {
           ))}
         </div>
 
-        {/* Home filter */}
         {homes.length > 0 && (
           <select
             value={filterHome}
             onChange={e => setFilterHome(e.target.value)}
-            className="text-xs font-medium border rounded-lg px-3 py-1.5 outline-none"
-            style={{ borderColor: "#DDE4ED", color: "#0B1F3A" }}
+            className="text-xs font-medium rounded-lg px-3 py-1.5 outline-none"
+            style={{ background: "#0F1523", border: "1px solid rgba(255,255,255,0.06)", color: "#94A3B8" }}
           >
             <option value="All">All Homes</option>
             {homes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
@@ -272,20 +252,19 @@ export default function TasksPage() {
         )}
       </div>
 
-      {/* Task list */}
-      {/* Select-all bar — only shows when there are pending tasks */}
+      {/* Select-all bar */}
       {!loading && filtered.some(t => t.status !== "Done") && (
         <div className="flex items-center gap-3 mb-3 px-1">
           <button
             onClick={toggleSelectAll}
-            className="flex items-center gap-2 text-xs font-semibold transition-colors"
-            style={{ color: "#64748B" }}
+            className="flex items-center gap-2 text-xs font-medium transition-colors"
+            style={{ color: "#475569" }}
           >
             <div
               className="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors"
               style={{
-                borderColor: filtered.filter(t => t.status !== "Done").every(t => selected.has(t.id)) ? "#0284C7" : "#CBD5E1",
-                background: filtered.filter(t => t.status !== "Done").every(t => selected.has(t.id)) ? "#0284C7" : "white",
+                borderColor: filtered.filter(t => t.status !== "Done").every(t => selected.has(t.id)) ? "#3B82F6" : "rgba(255,255,255,0.1)",
+                background: filtered.filter(t => t.status !== "Done").every(t => selected.has(t.id)) ? "#3B82F6" : "transparent",
               }}
             >
               {filtered.filter(t => t.status !== "Done").every(t => selected.has(t.id)) && (
@@ -297,13 +276,13 @@ export default function TasksPage() {
 
           {selected.size > 0 && (
             <>
-              <span className="text-xs font-semibold" style={{ color: "#0284C7" }}>
+              <span className="text-xs font-semibold" style={{ color: "#3B82F6" }}>
                 {selected.size} selected
               </span>
               <Button
                 onClick={markSelectedDone}
                 className="h-7 px-3 text-xs font-semibold gap-1.5"
-                style={{ background: "#16A34A", color: "white" }}
+                style={{ background: "rgba(34,197,94,0.15)", color: "#4ADE80", border: "1px solid rgba(34,197,94,0.2)" }}
               >
                 <CheckCheck size={13} />
                 Mark All Done
@@ -311,7 +290,7 @@ export default function TasksPage() {
               <button
                 onClick={() => setSelected(new Set())}
                 className="text-xs"
-                style={{ color: "#94A3B8" }}
+                style={{ color: "#334155" }}
               >
                 Clear
               </button>
@@ -322,15 +301,15 @@ export default function TasksPage() {
 
       {loading ? (
         <div className="space-y-2">
-          {[1,2,3].map(i => <div key={i} className="bg-white border border-gray-100 rounded-xl h-16 animate-pulse" />)}
+          {[1,2,3].map(i => <div key={i} className="rounded-xl h-16 animate-pulse" style={{ background: "#0F1523" }} />)}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white border rounded-2xl text-center" style={{ borderColor: "#DDE4ED" }}>
-          <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
-            <CheckSquare size={22} style={{ color: "#94A3B8" }} />
+        <div className="dash-card flex flex-col items-center justify-center py-20 text-center">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: "#131929" }}>
+            <CheckSquare size={22} style={{ color: "#334155" }} />
           </div>
-          <p className="font-semibold" style={{ color: "#0B1F3A" }}>No tasks found</p>
-          <p className="text-sm mt-0.5" style={{ color: "#94A3B8" }}>
+          <p className="font-medium" style={{ color: "#F1F5F9" }}>No tasks found</p>
+          <p className="text-sm mt-0.5" style={{ color: "#334155" }}>
             {filterStatus !== "All" ? `No ${filterStatus.toLowerCase()} tasks` : "Add your first task to get started"}
           </p>
         </div>
@@ -342,70 +321,71 @@ export default function TasksPage() {
             return (
               <div
                 key={t.id}
-                className="flex items-center gap-3 bg-white border rounded-xl px-4 py-3.5"
-                style={{ borderColor: isOverdue ? "#FECACA" : selected.has(t.id) ? "#BFDBFE" : "#DDE4ED", opacity: isDone ? 0.6 : 1, background: selected.has(t.id) ? "#F0F9FF" : "white" }}
+                className="flex items-center gap-3 rounded-xl px-4 py-3.5 transition-colors"
+                style={{
+                  background: selected.has(t.id) ? "rgba(59,130,246,0.08)" : "#0F1523",
+                  border: `1px solid ${isOverdue ? "rgba(239,68,68,0.3)" : selected.has(t.id) ? "rgba(59,130,246,0.3)" : "rgba(255,255,255,0.06)"}`,
+                  opacity: isDone ? 0.5 : 1,
+                }}
               >
-                {/* Row selection checkbox */}
                 {!isDone && (
                   <button
                     onClick={() => toggleSelect(t.id)}
                     className="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors"
                     style={{
-                      borderColor: selected.has(t.id) ? "#0284C7" : "#CBD5E1",
-                      background: selected.has(t.id) ? "#0284C7" : "white",
+                      borderColor: selected.has(t.id) ? "#3B82F6" : "rgba(255,255,255,0.1)",
+                      background: selected.has(t.id) ? "#3B82F6" : "transparent",
                     }}
                   >
                     {selected.has(t.id) && <Check size={10} strokeWidth={3} className="text-white" />}
                   </button>
                 )}
 
-                {/* Complete button */}
                 <button
                   onClick={() => markDone(t.id)}
                   disabled={isDone}
                   className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors"
                   style={{
-                    borderColor: isDone ? "#16A34A" : "#CBD5E1",
-                    background: isDone ? "#DCFCE7" : "transparent",
+                    borderColor: isDone ? "#4ADE80" : "rgba(255,255,255,0.1)",
+                    background: isDone ? "rgba(34,197,94,0.15)" : "transparent",
                   }}
                 >
-                  {isDone && <Check size={11} className="text-green-600" strokeWidth={3} />}
+                  {isDone && <Check size={11} strokeWidth={3} style={{ color: "#4ADE80" }} />}
                 </button>
 
-                {/* Task info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate" style={{ color: "#0B1F3A", textDecoration: isDone ? "line-through" : "none" }}>
+                  <p className="text-sm font-medium truncate" style={{ color: "#F1F5F9", textDecoration: isDone ? "line-through" : "none" }}>
                     {t.title}
                   </p>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     {t.home_name && (
-                      <span className="flex items-center gap-1 text-xs" style={{ color: "#94A3B8" }}>
+                      <span className="flex items-center gap-1 text-xs" style={{ color: "#334155" }}>
                         <Building2 size={10} />
                         {t.home_name}
                       </span>
                     )}
                     {t.due_date && (
-                      <span className="text-xs" style={{ color: isOverdue ? "#DC2626" : "#94A3B8" }}>
+                      <span className="text-xs" style={{ color: isOverdue ? "#F87171" : "#334155" }}>
                         {isOverdue ? "Overdue · " : ""}{new Date(t.due_date + "T00:00:00").toLocaleDateString()}
                       </span>
                     )}
                     {t.assigned_to && (
-                      <span className="text-xs" style={{ color: "#94A3B8" }}>→ {t.assigned_to}</span>
+                      <span className="text-xs" style={{ color: "#334155" }}>→ {t.assigned_to}</span>
                     )}
                   </div>
                 </div>
 
-                {/* Badges */}
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${typeColor(t.type)}`}>{t.type}</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${priorityColor(t.priority)}`}>{t.priority}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={typeStyle(t.type)}>{t.type}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={priorityStyle(t.priority)}>{t.priority}</span>
                 </div>
 
-                {/* Delete */}
                 <button
                   onClick={() => deleteTask(t.id)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-red-50 flex-shrink-0"
-                  style={{ color: "#CBD5E1" }}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors flex-shrink-0"
+                  style={{ color: "#1E293B" }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#F87171"}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#1E293B"}
                 >
                   <Trash2 size={13} />
                 </button>
@@ -417,59 +397,57 @@ export default function TasksPage() {
 
       {/* Add Task Dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg" style={{ background: "#0F1523", border: "1px solid rgba(255,255,255,0.08)" }}>
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold" style={{ color: "#0B1F3A" }}>Add Task</DialogTitle>
+            <DialogTitle className="text-lg font-semibold" style={{ color: "#F1F5F9" }}>Add Task</DialogTitle>
           </DialogHeader>
           <form onSubmit={addTask} className="space-y-4 mt-1">
             <div className="space-y-1.5">
-              <Label>Title <span className="text-red-500">*</span></Label>
-              <Input value={form.title} onChange={e => set("title", e.target.value)} placeholder="e.g. Run drug tests for Oak House" required />
+              <Label style={{ color: "#94A3B8" }}>Title <span className="text-red-400">*</span></Label>
+              <Input value={form.title} onChange={e => set("title", e.target.value)} placeholder="e.g. Run drug tests for Oak House" required
+                style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#F1F5F9" }} />
             </div>
             <div className="space-y-1.5">
-              <Label>Description</Label>
-              <Textarea value={form.description} onChange={e => set("description", e.target.value)} rows={2} placeholder="Optional details..." />
+              <Label style={{ color: "#94A3B8" }}>Description</Label>
+              <Textarea value={form.description} onChange={e => set("description", e.target.value)} rows={2} placeholder="Optional details..."
+                style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#F1F5F9" }} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Due Date</Label>
-                <Input type="date" value={form.due_date} onChange={e => set("due_date", e.target.value)} />
+                <Label style={{ color: "#94A3B8" }}>Due Date</Label>
+                <Input type="date" value={form.due_date} onChange={e => set("due_date", e.target.value)}
+                  style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#94A3B8" }} />
               </div>
               <div className="space-y-1.5">
-                <Label>Assigned To</Label>
-                <Input value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} placeholder="Manager name" />
+                <Label style={{ color: "#94A3B8" }}>Assigned To</Label>
+                <Input value={form.assigned_to} onChange={e => set("assigned_to", e.target.value)} placeholder="Manager name"
+                  style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#F1F5F9" }} />
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: "Priority", key: "priority", opts: PRIORITY_OPTS },
+                { label: "Type", key: "type", opts: TYPE_OPTS },
+              ].map(({ label, key, opts }) => (
+                <div key={key} className="space-y-1.5">
+                  <Label style={{ color: "#94A3B8" }}>{label}</Label>
+                  <select
+                    value={form[key as keyof typeof form]}
+                    onChange={e => set(key, e.target.value)}
+                    className="w-full rounded-md px-3 py-2 text-sm outline-none"
+                    style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#94A3B8" }}
+                  >
+                    {opts.map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                </div>
+              ))}
               <div className="space-y-1.5">
-                <Label>Priority</Label>
-                <select
-                  value={form.priority}
-                  onChange={e => set("priority", e.target.value)}
-                  className="w-full border rounded-md px-3 py-2 text-sm outline-none"
-                  style={{ borderColor: "#DDE4ED" }}
-                >
-                  {PRIORITY_OPTS.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Type</Label>
-                <select
-                  value={form.type}
-                  onChange={e => set("type", e.target.value)}
-                  className="w-full border rounded-md px-3 py-2 text-sm outline-none"
-                  style={{ borderColor: "#DDE4ED" }}
-                >
-                  {TYPE_OPTS.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Home</Label>
+                <Label style={{ color: "#94A3B8" }}>Home</Label>
                 <select
                   value={form.home_id}
                   onChange={e => set("home_id", e.target.value)}
-                  className="w-full border rounded-md px-3 py-2 text-sm outline-none"
-                  style={{ borderColor: "#DDE4ED" }}
+                  className="w-full rounded-md px-3 py-2 text-sm outline-none"
+                  style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#94A3B8" }}
                 >
                   <option value="">All Homes</option>
                   {homes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
@@ -477,8 +455,13 @@ export default function TasksPage() {
               </div>
             </div>
             <div className="flex gap-3 pt-1">
-              <Button type="button" variant="outline" onClick={() => setAddOpen(false)} className="flex-1">Cancel</Button>
-              <Button type="submit" className="flex-1 font-semibold" style={{ background: "#0284C7", color: "white" }}>Add Task</Button>
+              <Button type="button" variant="outline" onClick={() => setAddOpen(false)} className="flex-1"
+                style={{ borderColor: "rgba(255,255,255,0.08)", color: "#94A3B8", background: "transparent" }}>
+                Cancel
+              </Button>
+              <Button type="submit" className="flex-1 font-semibold" style={{ background: "#3B82F6", color: "white" }}>
+                Add Task
+              </Button>
             </div>
           </form>
         </DialogContent>
