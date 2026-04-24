@@ -6,12 +6,20 @@ A web app for sober living house managers and facility owners. Manages residents
 ## Project location
 `~/Desktop/dev/managr`
 
-## How to run
+## How to run (Dev Commands)
 ```bash
-cd ~/Desktop/dev/managr
-npm run dev
+# Kill any running instance + start fresh
+pkill -f "next dev" && cd ~/Desktop/dev/managr && npm run dev
+
+# Or just start (if nothing else is running)
+cd ~/Desktop/dev/managr && npm run dev
 ```
-Then open: http://localhost:3000
+Open: **http://localhost:3000** → goes straight to Owner Dashboard (no login — auth is bypassed for dev)
+
+### Auth bypass status: ACTIVE
+- App opens directly to dashboard as "Mike (Dev Mode)" — no login needed
+- To re-enable login later: edit `src/middleware.ts` and `src/components/auth/UserProvider.tsx`
+  (both files have clear `// ✅ DEV BYPASS` and `// 🔒 REAL AUTH` labels)
 
 ## Stack
 - Next.js 14 (App Router)

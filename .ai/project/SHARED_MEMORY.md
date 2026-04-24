@@ -1,6 +1,6 @@
 # Managr — Shared Memory (Claude + Codex)
 
-Last updated: 2026-04-18
+Last updated: 2026-04-23
 
 ## Critical gotchas
 - **Auth is currently BYPASSED** — middleware and UserProvider both have dev bypass active. See SESSION_HANDOFF.md for how to re-enable.
@@ -12,6 +12,7 @@ Last updated: 2026-04-18
 - First user to sign up = owner (checked by counting profiles table rows)
 - SUPABASE_SERVICE_ROLE_KEY must be in .env.local for /api/invite to work
 - Inline styles pattern used throughout (not Tailwind classes) for precise dark theme colors
+- Component name conflicts: never name a local component the same as a Lucide icon import
 
 ## Auth bypass files (DEV MODE)
 - `src/middleware.ts` — bypass block at top, real auth commented below
@@ -24,13 +25,25 @@ Last updated: 2026-04-18
 | Block 1 | homes, residents | Core — run first |
 | Block 2 | drug_tests, chores, notes, medications, weekly_meetings, restrictions | Resident detail tabs |
 | Block 3 | profiles + RLS | Required for real auth to work |
-| Block 4 | tasks, messages | Tasks and Messages pages |
+| Block 4 | tasks (basic), messages | Tasks and Messages pages |
 | Block 5 | nightly_reports | Nightly page |
+| Block 6 | tasks upgrade + task_group_completions | **New task system — must run** |
 
 ## Columns added via ALTER TABLE (included in Block 3 SQL on /seed)
 - homes.house_manager_email
 - homes.manager_phone
 - drug_tests.substance
+
+## Columns added via Block 6 ALTER TABLE
+- tasks.task_type (standard / group_morning_meds / group_night_meds / group_drug_test)
+- tasks.category
+- tasks.is_recurring
+- tasks.recurrence_type
+- tasks.last_completed_at
+- tasks.assigned_resident_id
+- tasks.assigned_by
+- tasks.assigned_to_manager
+- tasks.reminder_time
 
 ## Design system (do not change color values mid-build)
 ```
@@ -46,6 +59,13 @@ Text dim:      #334155
 Text ghost:    #1E293B
 Success:       #4ADE80 | Warning: #FCD34D | Danger: #F87171
 ```
+
+## Design facelift planned (NEXT SESSION)
+- New heading font: Syne or Space Grotesk (load via next/font/google)
+- Cards: subtle top-edge inner highlight
+- Section headers: higher contrast, left-border accent
+- Status pills: thin border + soft glow
+- Micro-interactions: hover scale, smoother transitions
 
 ## Utility CSS classes (from globals.css)
 - `.dash-card` — standard dark card (bg #0F1523, border, hover border blue)
@@ -68,3 +88,15 @@ Success:       #4ADE80 | Warning: #FCD34D | Danger: #F87171
 - Manager = house manager (sees only their assigned home)
 - Aamir's personal mission: give this to Mike as a gift + use it to reconnect
 - Long-term: sell to other sober living facilities ($500–$2,000/month SaaS)
+
+## Confirmed Reports Metrics (selected by Aamir, 2026-04-23)
+1. Occupancy Rate
+2. Drug Test Compliance Rate
+3. Drug Test Pass Rate
+4. 30-Day Retention Rate
+5. 90-Day Retention Rate
+6. Graduation Rate
+7. Average Length of Stay
+8. Active Red Flags
+9. Relapse Rate (30-day)
+10. Incident Rate

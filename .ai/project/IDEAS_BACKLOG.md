@@ -1,5 +1,36 @@
 # Managr — Ideas Backlog
 
+## Session 2026-04-23 — Approved for Next Build
+
+### Tasks Page Polish
+- Compact collapsed group task cards (less visual weight)
+- Drug tests for same house = one group card, not multiple rows
+- Section headings need contrast/presence fix
+- Conditional form fields in Add Task (fields appear based on selection)
+- Manager assignment dropdown pulls from real `profiles` table
+- Time picker on all task types
+- Click task to edit (not just add)
+
+### Nightly Reports — Owner Redesign
+- House cards grid (not flat list)
+- Each card: house name, manager, tonight status, incident preview
+- Click → House Nightly Detail (stats bar, tonight's report, full history timeline)
+
+### Reports Page — Full Rebuild (10 metrics confirmed)
+- 6 pinned snapshot cards + 4 in "More Metrics"
+- Click metric → drill-down drawer (calculation, data, goal vs actual)
+- Mike sets his own goal targets per metric
+- Date range filter (7/30/90/all) global
+
+### Design Facelift (entire app)
+- Heading font: Syne or Space Grotesk
+- Cards: top-edge highlight, more depth
+- Section headers: high contrast, left-border accent
+- Status pills: glow treatment
+- Micro-interactions: hover scale, smooth transitions
+
+---
+
 ## Aamir's Feature Ideas (Captured April 2026)
 
 ### Dual Dashboard System

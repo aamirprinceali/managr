@@ -171,6 +171,31 @@ CREATE TABLE IF NOT EXISTS restrictions (
   created_at TIMESTAMPTZ DEFAULT now()
 );`,
   },
+  {
+    number: 6,
+    title: "Upgrade tasks table + create group completions",
+    sql: `-- Add new columns to tasks table
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS task_type TEXT DEFAULT 'standard';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'General';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS is_recurring BOOLEAN DEFAULT false;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS recurrence_type TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS last_completed_at TIMESTAMPTZ;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS assigned_resident_id UUID REFERENCES residents(id) ON DELETE SET NULL;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS assigned_by TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS assigned_to_manager TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS reminder_time TEXT;
+
+-- Track individual resident check-offs for group tasks (meds, drug tests)
+CREATE TABLE IF NOT EXISTS task_group_completions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
+  resident_id UUID REFERENCES residents(id) ON DELETE CASCADE,
+  completed_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  completed_by TEXT,
+  completed_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(task_id, resident_id, completed_date)
+);`,
+  },
 ];
 
 type SeedStatus = "idle" | "running" | "done" | "error";

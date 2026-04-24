@@ -1,10 +1,11 @@
 # Managr — Feature Status
 
-Last updated: April 2026
+Last updated: 2026-04-23
 
 ## Legend
 - ✅ Built & styled (dark theme, complete UI)
 - 🔧 Built — requires Supabase table to be seeded to show data
+- 🔨 Built but needs polish next session
 - 📋 Placeholder page — skeleton only
 - 💡 Planned / backlog
 
@@ -22,122 +23,127 @@ Last updated: April 2026
 ---
 
 ## Dashboard (/dashboard)
-- ✅ Owner Dashboard:
-  - KPI strip (Homes, Residents, Open Beds, Active Flags, Nightlies Pending)
-  - Donut ring chart (occupancy overview)
-  - Bar chart (occupancy by home)
-  - House health grid with flag counts + nightly status
-  - Gradient flags feed (active red-flagged residents)
-  - Drug Tests overdue widget
-  - Nightly Reports status widget
-- ✅ Manager Dashboard:
-  - Daily checklist cards (Drug Tests Due, Chores Overdue, Nightly Status)
-  - Nightly reminder banner (shows after 8pm if not submitted)
-  - Resident list sorted Red → Yellow → Green (with sobriety days + status badge)
-  - Messages widget (unread count + list; Mike's messages highlighted amber)
-  - Open Flags gradient card
+- ✅ Owner Dashboard: KPIs, donut chart, bar chart, house health grid, flags feed, drug tests widget, nightly widget
+- ✅ Manager Dashboard: 4-card checklist (Tests / Chores / Nightly / Tasks), resident list, messages widget, open flags card
+- 🔧 Requires homes + residents + tasks tables in Supabase
 
 ---
 
 ## Homes
 - ✅ Homes list — card + list view toggle, stats bar, add home dialog
-- ✅ Home detail — resident list sorted by flag, occupancy, edit home
+- ✅ Home detail — resident list sorted by flag, occupancy bar, edit home
 - ✅ Resident profile — 7-tab deep profile (Overview, Drug Tests, Chores, Notes, Medications, Meetings, Restrictions)
-- ✅ Drug test weekly tracker on home dashboard (Mon–Sun, mark individual or bulk)
-- 🔧 All data from Supabase (requires homes + residents tables)
+- ✅ Drug test weekly tracker (Mon–Sun, mark individual or bulk)
+- 🔧 All data from Supabase
 
 ---
 
 ## All Residents (/residents) — Owner Only
-- 📋 Placeholder — global resident search across all homes (Sprint 2)
+- 📋 Placeholder — global resident search across all homes (Phase 2)
 
 ---
 
-## Tasks (/tasks)
-- ✅ Dark theme task list
-- ✅ Priority + type badges (dark pill style)
-- ✅ Filter by status and home
-- ✅ Select all + bulk mark done
-- ✅ Bulk Drug Test button (creates a drug test task per active resident)
-- ✅ Add Task dialog (dark theme)
-- 🔧 Requires `tasks` table in Supabase (Block 4 on /seed)
+## Tasks (/tasks) — REBUILT
+- ✅ Group tasks: Morning Meds, Night Meds, Drug Test Round
+- ✅ Collapsible resident checklist per group task with progress bar
+- ✅ "Mark All Done" per group task
+- ✅ Daily auto-reset via task_group_completions table
+- ✅ Standard tasks: title, category, priority, recurring, due date, reminder time
+- ✅ Owner can assign tasks to managers (with "From Mike" badge)
+- ✅ 2-step type picker dialog
+- ✅ Tabs: Today / All / Assigned / Recurring
+- ✅ Home filter
+- 🔨 Needs polish: compact group cards, sharper rows, conditional form fields, manager dropdown from DB, time picker, edit task
+- 🔧 Requires Block 6 SQL in Supabase (tasks upgrade + task_group_completions table)
 
 ---
 
 ## Messages (/messages)
 - ✅ House manager directory (name, email, phone per home)
-- ✅ mailto / tel links for quick contact
+- ✅ mailto / tel links
 - ✅ Internal compose panel
 - ✅ Message history with unread badges
-- 🔧 Requires `messages` table (Block 4 on /seed) + email/phone columns on homes (Block 3)
+- 🔧 Requires messages table (Block 4) + email/phone columns on homes (Block 3)
 
 ---
 
 ## Nightly Reports (/nightly)
-- ✅ Manager form — Yes/No toggles + notes for: residents accounted, incidents, medications, curfew violations + general notes
+- ✅ Manager form — Yes/No toggles + notes (residents accounted, incidents, meds, curfew violations)
 - ✅ "Already submitted" state with expandable confirmation card
-- ✅ Owner view — all homes listed with ✓/✗ status for last night, expandable to read full report
-- 🔧 Requires `nightly_reports` table in Supabase (Block 5 on /seed)
+- ✅ Owner view — all homes listed with ✓/✗ status, expandable to read full report
+- 🔨 Owner view needs redesign: house cards grid → click → House Nightly Detail page with history (NEXT SESSION)
+- 🔧 Requires nightly_reports table (Block 5)
 
 ---
 
 ## Reports (/reports)
-- ✅ Summary KPI cards (residents, compliance %, incidents, red flags)
-- ✅ Resident status table by home (active, on pass, green/yellow/red breakdown)
-- ✅ Drug test compliance bar + detail table
-- ✅ Incident log
-- ✅ Date range filter (7/14/30/90 days) + print button
+- ✅ Current: summary KPI cards, status table, drug test compliance bar, incident log, date filter
+- 🔨 Full rebuild planned next session around 10 confirmed metrics (see PROJECT_PLAN.md)
+- 💡 New design: 6 pinned snapshot cards, More Metrics expandable, click-to-drill-down drawer, goal vs actual, date range filter
 
 ---
 
 ## Calendar (/calendar)
-- 📋 Coming soon placeholder — dark themed with planned features preview
+- 📋 Coming soon placeholder
 
 ---
 
 ## Analytics (/analytics)
-- 📋 Owner-only placeholder — real charts coming in Phase 3
+- 📋 Owner-only placeholder — Phase 3
 
 ---
 
 ## Settings (/settings)
 - ✅ Team member list with role + home assignment badges
-- ✅ Invite house manager dialog (requires SUPABASE_SERVICE_ROLE_KEY in .env.local)
-- ✅ Remove team member (with confirmation dialog)
+- ✅ Invite house manager dialog
+- ✅ Remove team member (with confirmation)
 
 ---
 
 ## Setup / Seed (/seed)
-- ✅ Block 1: Core tables (homes, residents)
-- ✅ Block 2: Detail tables (drug_tests, chores, notes, medications, meetings, restrictions)
-- ✅ Block 3: profiles table + RLS policies + manager email/phone columns
-- ✅ Block 4: tasks + messages tables
-- ✅ Block 5: nightly_reports table
+- ✅ Block 1: homes, residents
+- ✅ Block 2: tasks table (basic — pre-upgrade)
+- ✅ Block 3: profiles + RLS + manager email/phone columns
+- ✅ Block 4: messages
+- ✅ Block 5: nightly_reports
+- ✅ Block 6: tasks upgrade + task_group_completions ← **must run for new task system**
 - ✅ Seed button — 3 test homes + 12 residents + sample data
 - ✅ Clear all data button
 
 ---
 
-## Planned — Phase 2 (next sprint)
-- 💡 Edit resident profile (currently create-only — need edit form for flag, status, sobriety date, notes)
-- 💡 Discharge resident flow (mark discharged, pick reason: graduated/left/violation/hospitalized)
-- 💡 All Residents page — global search + filter across all homes (owner only)
-- 💡 House Manager Candidates page — auto-filter (6+ months sobriety, zero fails, green flag)
-  - Mike can star/pin candidates
-  - Managers can nominate 1–2 from their home
-- 💡 Formal Incident Report form (type: fight/relapse/theft/curfew/medical/other)
-- 💡 Manager performance metrics (nightly rate, drug test %, incident frequency, flag counts → House Health Score)
-- 💡 Referral source field on resident intake (hospital/court/treatment/word of mouth/self/other)
-- 💡 Discharge outcome tracking (for retention rate analytics)
-- 💡 Flag history log (track flag changes: who changed it, when, old→new)
+## Confirmed Metrics for Reports Page (NEXT SESSION)
+1. Occupancy Rate
+2. Drug Test Compliance Rate
+3. Drug Test Pass Rate
+4. 30-Day Retention Rate
+5. 90-Day Retention Rate
+6. Graduation Rate
+7. Average Length of Stay
+8. Active Red Flags
+9. Relapse Rate (30-day)
+10. Incident Rate
 
 ---
 
-## Planned — Phase 3 (analytics + growth)
-- 💡 Analytics dashboard: discharge outcomes pie, drug test pass rate over time, avg length of stay, nightly compliance by manager
-- 💡 Push notifications (nightly reminder at 8pm if not submitted)
+## Planned — Phase 2 backlog
+- 💡 Edit resident profile
+- 💡 Discharge resident flow
+- 💡 All Residents page — global search + filter
+- 💡 House Manager Candidates page
+- 💡 Formal Incident Report form
+- 💡 Manager performance metrics → House Health Score
+- 💡 Referral source field on resident intake
+- 💡 Discharge outcome tracking
+- 💡 Flag history log
+
+---
+
+## Planned — Phase 3
+- 💡 Analytics dashboard (charts over time)
+- 💡 Push notifications
 - 💡 Google Calendar sync
 - 💡 Deploy to Vercel
-- 💡 Multi-facility admin panel (sell to other facilities)
-- 💡 Billing / subscription layer
-- 💡 React Native mobile app (same Supabase backend, no rebuild needed)
+- 💡 Multi-facility admin panel
+- 💡 Billing/subscription layer
+- 💡 React Native mobile app

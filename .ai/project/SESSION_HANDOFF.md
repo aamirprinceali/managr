@@ -1,4 +1,4 @@
-# Session Handoff — Last updated 2026-04-18
+# Session Handoff — Last updated 2026-04-23
 
 ## IMPORTANT: Auth is bypassed for dev mode
 The app opens directly to `/dashboard` — NO login required. This was intentional so Aamir can browse and build without fighting Supabase connectivity issues.
@@ -20,23 +20,78 @@ The app shows "Mike (Dev Mode)" in the sidebar as the owner. All owner-only page
 
 ---
 
-## What's been fully built (this session)
+## What's been fully built
 
 ### ✅ Complete — all styled, dark theme consistent
 | Page | Notes |
 |---|---|
 | Dashboard — Owner | KPIs, donut chart, bar chart, house health, flags feed, drug tests, nightly widget |
-| Dashboard — Manager | Checklist cards, resident list, messages widget (Mike's highlighted amber), open flags |
+| Dashboard — Manager | 4-card checklist (Tests, Chores, Nightly, Tasks), resident list, messages, flags |
 | Homes | List + detail, add/edit home dialog |
 | Resident Profile | 7 tabs: Overview, Drug Tests, Chores, Notes, Medications, Meetings, Restrictions |
-| Tasks | Full CRUD, bulk drug test, select all, priority/type badges |
-| Messages | Manager directory, compose panel, message history |
-| Nightly Reports | Manager form, already-submitted state, owner all-homes view |
+| Tasks (**REBUILT**) | Group tasks (Morning Meds / Night Meds / Drug Test Round), standard tasks, owner assignment, recurring, reminders, 2-step type picker, progress bars |
+| Messages | House manager directory, compose panel, message history |
+| Nightly Reports | Manager form + owner all-homes view |
 | Reports | KPI cards, status table, drug test compliance, incident log, date filter |
 | Settings | Team list, invite manager, remove member |
-| Calendar | Placeholder with feature preview |
-| Sidebar | All nav items, active states, homes sub-list |
-| Login | Bypassed for now — real login page exists and works when re-enabled |
+| Calendar | Placeholder |
+| Seed (/seed) | Blocks 1–6 all present |
+
+### ⚠️ Supabase — run Block 6 before using new Tasks
+Block 6 adds columns to `tasks` and creates `task_group_completions` table.
+Go to `/seed` → copy Block 6 → run in Supabase SQL Editor → confirm RLS warning (safe to ignore in dev).
+
+---
+
+## What to build NEXT SESSION (all approved, ready to build)
+
+### 1. Tasks Page — Polish & Fixes
+- Group task cards more compact when collapsed (less visual weight)
+- Section headings need more contrast/presence — currently blend into background
+- Drug tests for same house consolidated into one collapsible group card, not multiple rows
+- Task rows sharper, more premium visual treatment
+- Add Task form — strip to essentials only, conditional field reveals (fields appear based on prior selections)
+- "Assign to Manager" pulls real manager names from `profiles` table (dropdown, not free text)
+- Time picker added to both recurring and one-off tasks
+- Click existing task → opens in edit mode (currently add-only)
+
+### 2. Nightly Reports — Owner View Redesign
+Replace flat list with **house cards grid**:
+- Each card: house name, manager name, tonight's status (✓ Submitted / ✗ Missing), incident preview line
+- Click card → **House Nightly Detail page**:
+  - Header: house name, manager name + phone
+  - Stats bar: "Sarah has submitted 47 nightlies · 112 total for this house"
+  - Tonight's full report (expandable) or "Not submitted yet" banner
+  - History: scrollable timeline of every past nightly, each expandable to read full report
+
+### 3. Reports Page — Full Rebuild
+**Confirmed metrics (Top 10, selected by Aamir):**
+1. Occupancy Rate — % of beds filled across all homes
+2. Drug Test Compliance Rate — % of required weekly tests completed
+3. Drug Test Pass Rate — % of tests that came back negative
+4. 30-Day Retention Rate — % of residents who stayed 30+ days
+5. 90-Day Retention Rate — % of residents who stayed 90+ days (industry benchmark)
+6. Graduation Rate — % of discharges that were "completed program"
+7. Average Length of Stay — average days residents are in the program
+8. Active Red Flags — residents currently red-flagged across all homes
+9. Relapse Rate (30-day) — % of residents with a positive test in last 30 days
+10. Incident Rate — incidents per resident per month, trending up or down
+
+**Layout:**
+- Top 6 always visible as snapshot metric cards (Mike selects which 6 he wants pinned)
+- Remaining 4 in "More Metrics" expandable section below
+- Click any metric card → drawer opens showing calculation, raw data, goal vs actual
+- Date range filter (7 / 30 / 90 days / all time) at top — applies to all metrics
+- Each metric shows: current value, goal target, trend arrow (up/down vs last period)
+
+### 4. Design Facelift (entire app)
+- New heading font — Syne or Space Grotesk (more character, less generic)
+- Cards: subtle top-edge inner highlight, more layered depth
+- Section headers: stronger presence, thin colored left-border accent, better contrast
+- Sidebar: refined active state, subtle gradient behind active item
+- Status pills: thin border + soft glow treatment instead of flat fills
+- Page headers: clear visual hierarchy — title should feel like a title
+- Micro-details: hover states, slight scale on interactive cards, smoother transitions
 
 ---
 
@@ -45,61 +100,30 @@ The app shows "Mike (Dev Mode)" in the sidebar as the owner. All owner-only page
 - URL: `https://tvirellvovwppyofjtjs.supabase.co`
 - **Project may be paused** (free tier auto-pauses after inactivity) — check app.supabase.com
 
-### SQL blocks Aamir still needs to run in Supabase
-Go to app.supabase.com → SQL Editor → run each block from http://localhost:3000/seed
-
-| Block | Table | Status |
+### SQL blocks status
+| Block | Table(s) | Status |
 |---|---|---|
-| Block 1 | homes, residents | Likely already done |
-| Block 2 | drug_tests, chores, notes, medications, meetings, restrictions | Likely already done |
-| Block 3 | profiles + RLS + manager email/phone columns | May need to run |
-| Block 4 | tasks + messages | May need to run |
-| Block 5 | nightly_reports | Needs to be run |
+| Block 1 | homes, residents | ✅ Done |
+| Block 2 | tasks table (basic) | ✅ Done |
+| Block 3 | profiles + RLS | ✅ Done |
+| Block 4 | messages | ✅ Done |
+| Block 5 | nightly_reports | ✅ Done |
+| Block 6 | tasks upgrade + task_group_completions | ⚠️ Run this — needed for new task system |
 
 ### .env.local entries required
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://tvirellvovwppyofjtjs.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...  (already set)
-SUPABASE_SERVICE_ROLE_KEY=...  (needed for /settings invite manager — get from Supabase → Settings → API)
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...  (already set)
+SUPABASE_SERVICE_ROLE_KEY=...  (needed for /settings invite manager)
 ```
 
 ---
 
-## What to build next (in priority order)
-
-### Sprint 2 — Finish the skeleton
-
-**1. Edit Resident Profile** ← most important for demos
-Currently residents are create-only. Need an edit form that lets you update:
-- Flag color (Green/Yellow/Red)
-- Status (Active/On Pass/Discharged)
-- Sobriety date
-- General notes
-- Room number, phone
-File: `src/app/homes/[id]/residents/[residentId]/page.tsx`
-
-**2. All Residents page** (`/residents`)
-Currently a "coming soon" placeholder. Build: searchable list of all residents across all homes, sortable by flag/home/status. Owner only.
-File: `src/app/residents/page.tsx`
-
-**3. Discharge Resident flow**
-Button on resident profile: "Discharge Resident" → modal asking for outcome (Graduated / Left voluntarily / Rule violation / Hospitalized / Other). Sets status to Discharged, fills discharge_date.
-
-**4. House Manager Candidates page** (new page — `/candidates`)
-Owner-only page. Auto-filters residents who qualify: 6+ months as resident, 6+ months sobriety, zero failed drug tests in last 90 days, no incidents in last 90 days, Green flag.
-Mike can star/pin candidates. Managers can nominate 1–2 from their home.
-Needs new field: `hm_candidate_pinned` boolean on residents table.
-
-**5. Analytics page** (`/analytics`)
-Currently a placeholder. Build real charts: occupancy over time, drug test pass rate, discharge outcomes.
-
----
-
-## Design tokens (everything is built on these)
+## Design tokens (do not change)
 ```
 Background:    #090B14
 Card:          #0F1523
-Dark surface:  #131929  (inputs, table headers, nested cards)
+Dark surface:  #131929
 Border:        rgba(255,255,255,0.06)
 Primary blue:  #3B82F6
 Text heading:  #F1F5F9
@@ -107,9 +131,7 @@ Text body:     #94A3B8
 Text muted:    #475569
 Text dim:      #334155
 Text ghost:    #1E293B
-Success:       #4ADE80
-Warning:       #FCD34D
-Danger:        #F87171
+Success:       #4ADE80 | Warning: #FCD34D | Danger: #F87171
 ```
 
 ---
@@ -120,11 +142,10 @@ Danger:        #F87171
 - Drug test "overdue" = not tested this calendar week (Mon–Sun), NOT rolling 7 days
 - First user to sign up = owner (checked by counting profiles rows)
 - Supabase client: `createClient()` from `@/lib/supabase/client`
-- Graceful table fallback pattern: try/catch → show "table not set up" state with link to /seed
+- Graceful table fallback: try/catch → show "table not set up" state with link to /seed
 
 ---
 
 ## GitHub
 Repo: https://github.com/aamirprinceali/managr
 Branch: main
-All changes are committed and pushed as of 2026-04-18.

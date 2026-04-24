@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   Users, FlaskConical, CheckSquare, Moon, ChevronRight,
-  CheckCircle, MessageCircle, AlertTriangle, XCircle, ArrowUpRight, Shield
+  CheckCircle, MessageCircle, AlertTriangle, XCircle, ArrowUpRight, Shield,
+  ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
 import { useProfile } from "@/components/auth/UserProvider";
@@ -39,6 +40,8 @@ export default function ManagerDashboard() {
   const [drugTestsDue, setDrugTestsDue] = useState(0);
   const [choresOverdue, setChoresOverdue] = useState(0);
   const [nightlySubmitted, setNightlySubmitted] = useState(false);
+  const [tasksPending, setTasksPending] = useState(0);
+  const [assignedTasks, setAssignedTasks] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const todayDisplay = new Date().toLocaleDateString("en-US", {
@@ -110,6 +113,38 @@ export default function ManagerDashboard() {
       })) as Message[]);
     } catch {}
 
+    // Tasks pending for this home
+    try {
+      const todayStr = new Date().toISOString().split("T")[0];
+      const { data: taskData } = await supabase.from("tasks")
+        .select("id, status, is_recurring, last_completed_at, recurrence_type, task_type, assigned_by")
+        .eq("home_id", homeId);
+      if (taskData) {
+        let pending = 0, assigned = 0;
+        for (const t of taskData) {
+          const isRec = t.is_recurring as boolean;
+          const status = t.status as string;
+          const last = t.last_completed_at as string | null;
+          const recType = t.recurrence_type as string | null;
+          const taskType = (t.task_type as string) ?? "standard";
+          let isDue = false;
+          if (taskType !== "standard") {
+            isDue = !last || last.split("T")[0] < todayStr;
+          } else if (isRec) {
+            if (!last) isDue = true;
+            else if (recType === "daily") isDue = last.split("T")[0] < todayStr;
+            else isDue = false;
+          } else {
+            isDue = status !== "Done";
+          }
+          if (isDue) pending++;
+          if (t.assigned_by) assigned++;
+        }
+        setTasksPending(pending);
+        setAssignedTasks(assigned);
+      }
+    } catch {}
+
     setLoading(false);
   }
 
@@ -117,8 +152,8 @@ export default function ManagerDashboard() {
     return (
       <div className="max-w-6xl mx-auto space-y-4 fade-in">
         <div className="h-16 rounded-2xl animate-pulse" style={{ background: "#0F1523" }} />
-        <div className="grid grid-cols-3 gap-4">
-          {[1,2,3].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse" style={{ background: "#0F1523" }} />)}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse" style={{ background: "#0F1523" }} />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {[1,2].map(i => <div key={i} className="h-64 rounded-2xl animate-pulse" style={{ background: "#0F1523" }} />)}
@@ -168,7 +203,7 @@ export default function ManagerDashboard() {
       )}
 
       {/* ── Checklist Cards ───────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
         {[
           {
             label: "Tests Due",
@@ -195,13 +230,30 @@ export default function ManagerDashboard() {
             alertColor: "#EAB308",
             isText: true,
           },
+          {
+            label: "Tasks",
+            value: tasksPending === 0 ? "All Done" : tasksPending,
+            icon: ClipboardList,
+            href: "/tasks",
+            ok: tasksPending === 0,
+            alertColor: "#60A5FA",
+            isText: tasksPending === 0,
+          },
         ].map((card) => (
           <Link key={card.label} href={card.href}
             className="dash-card p-4 flex flex-col">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-3"
-              style={{ background: card.ok ? "rgba(34,197,94,0.1)" : `${card.alertColor}18` }}>
-              <card.icon size={15} strokeWidth={2}
-                style={{ color: card.ok ? "#22C55E" : card.alertColor }} />
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ background: card.ok ? "rgba(34,197,94,0.1)" : `${card.alertColor}18` }}>
+                <card.icon size={15} strokeWidth={2}
+                  style={{ color: card.ok ? "#22C55E" : card.alertColor }} />
+              </div>
+              {card.label === "Tasks" && assignedTasks > 0 && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                  style={{ background: "rgba(59,130,246,0.15)", color: "#60A5FA" }}>
+                  {assignedTasks} assigned
+                </span>
+              )}
             </div>
             <p className="text-xl font-bold"
               style={{ color: card.ok ? "#22C55E" : card.alertColor }}>
