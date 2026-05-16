@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Building2, Users, FileText, Settings, BarChart3, ChevronRight,
   Shield, LayoutDashboard, CheckSquare, MessageCircle, Database,
-  LogOut, UserCircle, Calendar, Moon,
+  LogOut, Calendar, Moon, User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -13,25 +13,35 @@ import { useProfile } from "@/components/auth/UserProvider";
 
 type Home = { id: string; name: string };
 
+const NAV = [
+  { href: "/dashboard",  label: "Dashboard",     icon: LayoutDashboard, ownerOnly: false },
+  { href: "/homes",      label: "Homes",          icon: Building2,       ownerOnly: false, expandable: true },
+  { href: "/residents",  label: "All Residents",  icon: Users,           ownerOnly: true  },
+  { href: "/tasks",      label: "Tasks",          icon: CheckSquare,     ownerOnly: false },
+  { href: "/messages",   label: "Messages",       icon: MessageCircle,   ownerOnly: false },
+  { href: "/nightly",    label: "Nightly",        icon: Moon,            ownerOnly: false },
+  { href: "/reports",    label: "Reports",        icon: FileText,        ownerOnly: false },
+  { href: "/analytics",  label: "Analytics",      icon: BarChart3,       ownerOnly: true  },
+  { href: "/calendar",   label: "Calendar",       icon: Calendar,        ownerOnly: false },
+  { href: "/settings",   label: "Settings",       icon: Settings,        ownerOnly: false },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
+  const router   = useRouter();
   const { profile, user, signOut } = useProfile();
   const [homes, setHomes] = useState<Home[]>([]);
   const onHomesSection = pathname.startsWith("/homes");
-
-  const isOwner = profile?.role === "owner";
+  const isOwner   = profile?.role === "owner";
   const isManager = profile?.role === "manager";
 
   useEffect(() => {
-    if (onHomesSection) {
-      const supabase = createClient();
-      let query = supabase.from("homes").select("id, name").order("name");
-      if (isManager && profile?.home_id) {
-        query = supabase.from("homes").select("id, name").eq("id", profile.home_id);
-      }
-      query.then(({ data }) => setHomes(data ?? []));
-    }
+    if (!onHomesSection) return;
+    const sb = createClient();
+    const q = isManager && profile?.home_id
+      ? sb.from("homes").select("id, name").eq("id", profile.home_id)
+      : sb.from("homes").select("id, name").order("name");
+    q.then(({ data }) => setHomes(data ?? []));
   }, [onHomesSection, isManager, profile?.home_id]);
 
   async function handleSignOut() {
@@ -40,54 +50,48 @@ export default function Sidebar() {
     router.refresh();
   }
 
-  const navItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, ownerOnly: false },
-    { href: "/homes", label: isManager ? "My Home" : "Homes", icon: Building2, expandable: true, ownerOnly: false },
-    { href: "/residents", label: "All Residents", icon: Users, ownerOnly: true },
-    { href: "/tasks", label: "Tasks", icon: CheckSquare, ownerOnly: false },
-    { href: "/messages", label: "Messages", icon: MessageCircle, ownerOnly: false },
-    { href: "/nightly", label: "Nightly", icon: Moon, ownerOnly: false },
-    { href: "/reports", label: "Reports", icon: FileText, ownerOnly: false },
-    { href: "/analytics", label: "Analytics", icon: BarChart3, ownerOnly: true },
-    { href: "/calendar", label: "Calendar", icon: Calendar, ownerOnly: false },
-    { href: "/settings", label: "Settings", icon: Settings, ownerOnly: false },
-  ];
-
-  const visibleNav = navItems.filter(item => isOwner || !item.ownerOnly);
+  const visibleNav = NAV.filter(item => isOwner || !item.ownerOnly);
 
   return (
-    <aside className="w-56 min-h-screen flex flex-col"
-      style={{ background: "#090B14", borderRight: "1px solid rgba(255,255,255,0.05)" }}>
-
+    <aside
+      className="w-[220px] min-h-screen flex flex-col flex-shrink-0"
+      style={{ background: "#032D60", borderRight: "1px solid rgba(255,255,255,0.06)" }}
+    >
       {/* Logo */}
-      <div className="px-4 pt-5 pb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #1D4ED8, #3B82F6)" }}>
+      <div className="px-5 pt-6 pb-5">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: "rgba(27,110,243,0.9)", boxShadow: "0 2px 8px rgba(27,110,243,0.4)" }}
+          >
             <Shield size={14} className="text-white" strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="font-bold text-sm tracking-tight leading-none" style={{ color: "#F1F5F9" }}>Managr</h1>
-            <p className="text-[9px] font-medium uppercase tracking-widest mt-0.5" style={{ color: "#1E293B" }}>
+            <p className="text-sm font-bold tracking-tight text-white" style={{ fontFamily: "var(--font-manrope, Manrope)" }}>
+              Managr
+            </p>
+            <p className="text-[9px] font-medium uppercase tracking-widest mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>
               Recovery Housing
             </p>
           </div>
         </div>
       </div>
 
-      {/* User info — like reference's avatar + greeting */}
+      {/* User info */}
       {user && (
-        <div className="px-4 pb-4">
+        <div className="mx-3 mb-4 px-3 py-2.5 rounded-lg" style={{ background: "rgba(255,255,255,0.05)" }}>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(59,130,246,0.15)", border: "1px solid rgba(59,130,246,0.2)" }}>
-              <UserCircle size={15} style={{ color: "#60A5FA" }} />
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: "rgba(27,110,243,0.25)", border: "1px solid rgba(27,110,243,0.35)" }}
+            >
+              <User size={13} style={{ color: "#60A5FA" }} />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold truncate" style={{ color: "#F1F5F9" }}>
-                {profile?.full_name ?? user.email?.split("@")[0]}
+            <div className="min-w-0">
+              <p className="text-xs font-semibold truncate text-white">
+                {profile?.full_name ?? user.email?.split("@")[0] ?? "User"}
               </p>
-              <p className="text-[9px] font-medium capitalize" style={{ color: "#334155" }}>
+              <p className="text-[10px] capitalize" style={{ color: "rgba(255,255,255,0.4)" }}>
                 {profile?.role ?? "..."}
               </p>
             </div>
@@ -95,61 +99,97 @@ export default function Sidebar() {
         </div>
       )}
 
-      <div className="h-px mx-4 mb-2" style={{ background: "rgba(255,255,255,0.04)" }} />
+      {/* Nav group label */}
+      <div className="px-5 mb-1">
+        <p className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>
+          Navigation
+        </p>
+      </div>
 
       {/* Main nav */}
-      <nav className="flex-1 px-2 py-1 overflow-y-auto">
-        {visibleNav.map(({ href, label, icon: Icon, expandable }) => {
-          const resolvedHref = (isManager && href === "/homes" && profile?.home_id)
-            ? `/homes/${profile.home_id}`
-            : href;
+      <nav className="flex-1 px-2 pb-2 overflow-y-auto space-y-0.5">
+        {visibleNav.map(({ href, label, icon: Icon, expandable, ownerOnly: _oo }) => {
+          const resolvedHref =
+            isManager && href === "/homes" && profile?.home_id
+              ? `/homes/${profile.home_id}`
+              : href;
 
-          const isActive = pathname === resolvedHref || pathname.startsWith(resolvedHref + "/")
-            || (href === "/homes" && pathname.startsWith("/homes"));
-          const showHomes = expandable && onHomesSection && homes.length > 0 && isOwner;
+          const isActive =
+            pathname === resolvedHref ||
+            pathname.startsWith(resolvedHref + "/") ||
+            (href === "/homes" && pathname.startsWith("/homes"));
+
+          const showSubs = expandable && onHomesSection && homes.length > 0 && isOwner;
 
           return (
             <div key={href}>
               <Link
                 href={resolvedHref}
                 className={cn(
-                  "flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-150 mb-0.5 text-sm font-medium"
+                  "flex items-center gap-2.5 px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-150",
+                  isActive ? "sidebar-item-active" : ""
                 )}
                 style={isActive
-                  ? { background: "#0F1523", color: "#F1F5F9" }
-                  : { color: "#334155" }
+                  ? { color: "#FFFFFF" }
+                  : { color: "rgba(255,255,255,0.5)" }
                 }
-                onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = "#0F1523"; (e.currentTarget as HTMLElement).style.color = "#64748B"; } }}
-                onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#334155"; } }}
+                onMouseEnter={e => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
+                    (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLElement).style.background = "transparent";
+                    (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)";
+                  }
+                }}
               >
                 <Icon
-                  size={16}
+                  size={15}
                   strokeWidth={isActive ? 2.5 : 2}
-                  style={{ color: isActive ? "#3B82F6" : "inherit" }}
+                  style={{ color: isActive ? "#60A5FA" : "inherit", flexShrink: 0 }}
                 />
-                <span className="flex-1 text-sm">{label}</span>
-                {expandable && homes.length > 0 && isOwner && (
+                <span className="flex-1 truncate">{label}</span>
+                {expandable && isOwner && homes.length > 0 && (
                   <ChevronRight
-                    size={12}
-                    className={cn("transition-transform duration-200", onHomesSection && "rotate-90")}
-                    style={{ color: "#1E293B" }}
+                    size={11}
+                    className={cn("transition-transform duration-200 flex-shrink-0", onHomesSection && "rotate-90")}
+                    style={{ color: "rgba(255,255,255,0.25)" }}
                   />
                 )}
               </Link>
 
-              {/* Expandable homes sub-list — owner only */}
-              {showHomes && (
-                <div className="ml-4 mb-1 border-l pl-3" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+              {/* Homes sub-list */}
+              {showSubs && (
+                <div className="ml-3 mt-0.5 mb-1 pl-3 space-y-0.5" style={{ borderLeft: "1px solid rgba(255,255,255,0.08)" }}>
                   {homes.map(home => {
-                    const homeActive = pathname === `/homes/${home.id}` || pathname.startsWith(`/homes/${home.id}/`);
+                    const homeActive =
+                      pathname === `/homes/${home.id}` ||
+                      pathname.startsWith(`/homes/${home.id}/`);
                     return (
                       <Link
                         key={home.id}
                         href={`/homes/${home.id}`}
-                        className="block px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 mb-0.5 truncate"
-                        style={homeActive ? { background: "#0F1523", color: "#60A5FA" } : { color: "#1E293B" }}
-                        onMouseEnter={e => { if (!homeActive) { (e.currentTarget as HTMLElement).style.color = "#475569"; (e.currentTarget as HTMLElement).style.background = "#0F1523"; } }}
-                        onMouseLeave={e => { if (!homeActive) { (e.currentTarget as HTMLElement).style.color = "#1E293B"; (e.currentTarget as HTMLElement).style.background = "transparent"; } }}
+                        className="block px-2.5 py-1.5 rounded-md text-[12px] font-medium truncate transition-all duration-150"
+                        style={
+                          homeActive
+                            ? { background: "rgba(255,255,255,0.08)", color: "#93C5FD" }
+                            : { color: "rgba(255,255,255,0.4)" }
+                        }
+                        onMouseEnter={e => {
+                          if (!homeActive) {
+                            (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)";
+                            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)";
+                          }
+                        }}
+                        onMouseLeave={e => {
+                          if (!homeActive) {
+                            (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.4)";
+                            (e.currentTarget as HTMLElement).style.background = "transparent";
+                          }
+                        }}
                       >
                         {home.name}
                       </Link>
@@ -162,29 +202,48 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Bottom: setup + logout */}
-      <div className="px-2 pb-3 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+      {/* Bottom actions */}
+      <div className="px-2 py-3 space-y-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
         {isOwner && (
           <Link
             href="/seed"
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-150 text-xs font-medium mb-1"
-            style={{ color: pathname === "/seed" ? "#3B82F6" : "#1E293B", background: pathname === "/seed" ? "#0F1523" : "transparent" }}
-            onMouseEnter={e => { if (pathname !== "/seed") (e.currentTarget as HTMLElement).style.background = "#0F1523"; }}
-            onMouseLeave={e => { if (pathname !== "/seed") (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-medium transition-all duration-150"
+            style={{
+              color: pathname === "/seed" ? "#60A5FA" : "rgba(255,255,255,0.3)",
+              background: pathname === "/seed" ? "rgba(96,165,250,0.1)" : "transparent",
+            }}
+            onMouseEnter={e => {
+              if (pathname !== "/seed") {
+                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)";
+                (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)";
+              }
+            }}
+            onMouseLeave={e => {
+              if (pathname !== "/seed") {
+                (e.currentTarget as HTMLElement).style.background = "transparent";
+                (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.3)";
+              }
+            }}
           >
-            <Database size={13} strokeWidth={2} />
+            <Database size={13} strokeWidth={2} style={{ flexShrink: 0 }} />
             Setup & Seed
           </Link>
         )}
 
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-150 text-xs font-medium"
-          style={{ color: "#1E293B" }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#0F1523"; (e.currentTarget as HTMLElement).style.color = "#EF4444"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#1E293B"; }}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-medium transition-all duration-150"
+          style={{ color: "rgba(255,255,255,0.3)" }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLElement).style.background = "rgba(220,38,38,0.1)";
+            (e.currentTarget as HTMLElement).style.color = "#FCA5A5";
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLElement).style.background = "transparent";
+            (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.3)";
+          }}
         >
-          <LogOut size={13} strokeWidth={2} />
+          <LogOut size={13} strokeWidth={2} style={{ flexShrink: 0 }} />
           Sign Out
         </button>
       </div>

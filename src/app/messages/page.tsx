@@ -92,25 +92,25 @@ export default function MessagesPage() {
 
   const unreadCount = messages.filter(m => !m.is_read).length;
 
-  const inputStyle = { background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#F1F5F9" };
+  const inputStyle = { background: "#FFFFFF", border: "1px solid #E2E8F0", color: "#0F172A" };
 
   return (
     <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-xl font-semibold tracking-tight" style={{ color: "#F1F5F9" }}>Messages</h1>
+        <h1 className="page-title">Messages</h1>
         <p className="text-sm mt-0.5" style={{ color: "#475569" }}>Contact house managers by email, phone, or internal message</p>
       </div>
 
       {/* Setup notice */}
-      <div className="rounded-xl p-3.5 mb-5 flex items-start gap-2.5" style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)" }}>
-        <AlertTriangle size={14} style={{ color: "#60A5FA", flexShrink: 0, marginTop: 1 }} />
+      <div className="rounded-xl p-3.5 mb-5 flex items-start gap-2.5" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)" }}>
+        <AlertTriangle size={14} style={{ color: "#1B6EF3", flexShrink: 0, marginTop: 1 }} />
         <div>
-          <p className="text-xs font-semibold" style={{ color: "#60A5FA" }}>To add email/phone to managers</p>
+          <p className="text-xs font-semibold" style={{ color: "#1B6EF3" }}>To add email/phone to managers</p>
           <p className="text-xs mt-0.5" style={{ color: "#475569" }}>
             Go to any home → edit → fill in Manager Email and Manager Phone.
             Requires the new columns in Supabase —{" "}
-            <Link href="/seed" className="underline" style={{ color: "#60A5FA" }}>see Setup page</Link>.
+            <Link href="/seed" className="underline" style={{ color: "#1B6EF3" }}>see Setup page</Link>.
           </p>
         </div>
       </div>
@@ -122,12 +122,12 @@ export default function MessagesPage() {
           <p className="card-label">House Managers</p>
           {loading ? (
             <div className="space-y-2">
-              {[1,2,3].map(i => <div key={i} className="rounded-xl h-24 animate-pulse" style={{ background: "#0F1523" }} />)}
+              {[1,2,3].map(i => <div key={i} className="rounded-xl h-24 animate-pulse bg-slate-100" />)}
             </div>
           ) : managers.length === 0 ? (
             <div className="dash-card p-8 text-center">
               <p className="text-sm" style={{ color: "#334155" }}>No homes added yet</p>
-              <Link href="/homes" className="text-xs mt-1 block" style={{ color: "#3B82F6" }}>Add a home →</Link>
+              <Link href="/homes" className="text-xs mt-1 block" style={{ color: "#1B6EF3" }}>Add a home →</Link>
             </div>
           ) : (
             managers.map(m => (
@@ -135,12 +135,12 @@ export default function MessagesPage() {
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <Building2 size={12} style={{ color: "#3B82F6" }} />
-                      <p className="text-sm font-medium" style={{ color: "#F1F5F9" }}>{m.homeName}</p>
+                      <Building2 size={12} style={{ color: "#1B6EF3" }} />
+                      <p className="text-sm font-medium" style={{ color: "#0F172A" }}>{m.homeName}</p>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <UserCircle size={11} style={{ color: "#334155" }} />
-                      <p className="text-xs" style={{ color: m.managerName ? "#94A3B8" : "#334155" }}>
+                      <UserCircle size={11} style={{ color: "#94A3B8" }} />
+                      <p className="text-xs" style={{ color: m.managerName ? "#64748B" : "#94A3B8" }}>
                         {m.managerName ?? "No manager assigned"}
                       </p>
                     </div>
@@ -148,10 +148,8 @@ export default function MessagesPage() {
                   {messagesAvailable && (
                     <button
                       onClick={() => openCompose(m)}
-                      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                      style={{ background: "#131929", color: "#94A3B8", border: "1px solid rgba(255,255,255,0.06)" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#F1F5F9"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#94A3B8"; }}
+                      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors hover:bg-slate-100"
+                      style={{ background: "#F8FAFC", color: "#64748B", border: "1px solid #E2E8F0" }}
                     >
                       <MessageCircle size={12} />
                       Message
@@ -163,22 +161,22 @@ export default function MessagesPage() {
                   {m.email ? (
                     <a
                       href={`mailto:${m.email}?subject=Re: ${m.homeName}`}
-                      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                      style={{ color: "#60A5FA", border: "1px solid rgba(59,130,246,0.2)", background: "rgba(59,130,246,0.06)" }}
+                      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors hover:opacity-80"
+                      style={{ color: "#1B6EF3", border: "1px solid rgba(27,110,243,0.2)", background: "rgba(27,110,243,0.05)" }}
                     >
                       <Mail size={11} />
                       {m.email}
                     </a>
                   ) : (
-                    <span className="text-xs px-3 py-1.5 rounded-lg" style={{ color: "#1E293B", background: "#131929", border: "1px solid rgba(255,255,255,0.04)" }}>
+                    <span className="text-xs px-3 py-1.5 rounded-lg" style={{ color: "#94A3B8", background: "#F8FAFC", border: "1px solid #E2E8F0" }}>
                       No email on file
                     </span>
                   )}
                   {m.phone && (
                     <a
                       href={`tel:${m.phone}`}
-                      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                      style={{ color: "#4ADE80", border: "1px solid rgba(34,197,94,0.2)", background: "rgba(34,197,94,0.06)" }}
+                      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors hover:opacity-80"
+                      style={{ color: "#16A34A", border: "1px solid rgba(22,163,74,0.2)", background: "rgba(22,163,74,0.05)" }}
                     >
                       <Phone size={11} />
                       {m.phone}
@@ -194,42 +192,42 @@ export default function MessagesPage() {
         <div className="space-y-3">
           {/* Compose panel */}
           {composeOpen && selectedManager && (
-            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(59,130,246,0.3)", background: "#0F1523" }}>
-              <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(59,130,246,0.06)" }}>
+            <div className="rounded-2xl overflow-hidden bg-white" style={{ border: "1px solid rgba(27,110,243,0.2)" }}>
+              <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid #E2E8F0", background: "rgba(27,110,243,0.04)" }}>
                 <div>
-                  <p className="text-sm font-medium" style={{ color: "#F1F5F9" }}>
+                  <p className="text-sm font-medium" style={{ color: "#0F172A" }}>
                     Message to {selectedManager.managerName ?? selectedManager.homeName}
                   </p>
-                  <p className="text-xs" style={{ color: "#334155" }}>{selectedManager.homeName}</p>
+                  <p className="text-xs" style={{ color: "#64748B" }}>{selectedManager.homeName}</p>
                 </div>
-                <button onClick={() => setComposeOpen(false)} className="text-xs" style={{ color: "#334155" }}>✕</button>
+                <button onClick={() => setComposeOpen(false)} className="text-xs" style={{ color: "#94A3B8" }}>✕</button>
               </div>
               {sent ? (
                 <div className="px-5 py-6 text-center">
-                  <p className="font-medium text-sm" style={{ color: "#4ADE80" }}>Message sent!</p>
-                  <button onClick={() => setComposeOpen(false)} className="text-xs mt-2 underline" style={{ color: "#3B82F6" }}>Close</button>
+                  <p className="font-medium text-sm" style={{ color: "#16A34A" }}>Message sent!</p>
+                  <button onClick={() => setComposeOpen(false)} className="text-xs mt-2 underline" style={{ color: "#1B6EF3" }}>Close</button>
                 </div>
               ) : (
                 <form onSubmit={sendInternal} className="p-5 space-y-3">
                   <div className="space-y-1.5">
-                    <Label style={{ color: "#94A3B8" }}>From</Label>
+                    <Label style={{ color: "#64748B" }}>From</Label>
                     <Input value={form.from_name} onChange={e => set("from_name", e.target.value)} placeholder="Your name" required style={inputStyle} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label style={{ color: "#94A3B8" }}>Subject</Label>
+                    <Label style={{ color: "#64748B" }}>Subject</Label>
                     <Input value={form.subject} onChange={e => set("subject", e.target.value)} placeholder="Subject (optional)" style={inputStyle} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label style={{ color: "#94A3B8" }}>Message <span className="text-red-400">*</span></Label>
+                    <Label style={{ color: "#64748B" }}>Message <span className="text-red-500">*</span></Label>
                     <Textarea value={form.body} onChange={e => set("body", e.target.value)} rows={4} placeholder="Write your message..." required style={inputStyle} />
                   </div>
                   <div className="flex gap-2">
                     <Button type="button" variant="outline" className="flex-1 text-xs" onClick={() => setComposeOpen(false)}
-                      style={{ borderColor: "rgba(255,255,255,0.08)", color: "#94A3B8", background: "transparent" }}>
+                      style={{ borderColor: "#E2E8F0", color: "#64748B", background: "transparent" }}>
                       Cancel
                     </Button>
                     <Button type="submit" disabled={sending} className="flex-1 text-xs font-semibold gap-1.5"
-                      style={{ background: "#3B82F6", color: "white" }}>
+                      style={{ background: "#1B6EF3", color: "white" }}>
                       <Send size={13} />
                       {sending ? "Sending..." : "Send"}
                     </Button>
@@ -243,7 +241,7 @@ export default function MessagesPage() {
           <div className="flex items-center gap-2 mt-1">
             <p className="card-label">Message History</p>
             {unreadCount > 0 && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#3B82F6", color: "white" }}>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#1B6EF3", color: "white" }}>
                 {unreadCount} new
               </span>
             )}
@@ -251,12 +249,12 @@ export default function MessagesPage() {
 
           {!messagesAvailable ? (
             <div className="dash-card p-6 text-center">
-              <p className="text-sm font-medium mb-1" style={{ color: "#FCD34D" }}>Messages table not set up</p>
-              <p className="text-xs mb-3" style={{ color: "#334155" }}>
-                Internal messaging requires the <code className="px-1 rounded" style={{ background: "#131929", color: "#94A3B8" }}>messages</code> table.
+              <p className="text-sm font-medium mb-1" style={{ color: "#D97706" }}>Messages table not set up</p>
+              <p className="text-xs mb-3" style={{ color: "#64748B" }}>
+                Internal messaging requires the <code className="px-1 rounded bg-slate-100 text-slate-600">messages</code> table.
               </p>
               <Link href="/seed">
-                <Button variant="outline" className="text-xs" style={{ borderColor: "rgba(255,255,255,0.08)", color: "#94A3B8" }}>
+                <Button variant="outline" className="text-xs" style={{ borderColor: "#E2E8F0", color: "#64748B" }}>
                   Go to Setup Page
                 </Button>
               </Link>
@@ -264,7 +262,7 @@ export default function MessagesPage() {
           ) : messages.length === 0 ? (
             <div className="dash-card p-8 text-center">
               <p className="text-sm font-medium" style={{ color: "#334155" }}>No messages yet</p>
-              <p className="text-xs mt-0.5" style={{ color: "#1E293B" }}>Send a message to a house manager to get started</p>
+              <p className="text-xs mt-0.5" style={{ color: "#94A3B8" }}>Send a message to a house manager to get started</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -272,24 +270,24 @@ export default function MessagesPage() {
                 <div
                   key={m.id}
                   onClick={() => markRead(m.id)}
-                  className="rounded-xl px-4 py-3 cursor-pointer row-hover transition-colors"
+                  className="rounded-xl px-4 py-3 cursor-pointer transition-colors hover:bg-slate-50"
                   style={{
-                    background: m.is_read ? "#0F1523" : "rgba(59,130,246,0.06)",
-                    border: `1px solid ${m.is_read ? "rgba(255,255,255,0.06)" : "rgba(59,130,246,0.2)"}`,
+                    background: m.is_read ? "#FFFFFF" : "rgba(27,110,243,0.04)",
+                    border: `1px solid ${m.is_read ? "#E2E8F0" : "rgba(27,110,243,0.2)"}`,
                   }}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-medium" style={{ color: "#F1F5F9" }}>
-                      {!m.is_read && <span className="inline-block w-1.5 h-1.5 rounded-full mr-1.5 mb-0.5" style={{ background: "#3B82F6" }} />}
+                    <p className="text-sm font-medium" style={{ color: "#0F172A" }}>
+                      {!m.is_read && <span className="inline-block w-1.5 h-1.5 rounded-full mr-1.5 mb-0.5" style={{ background: "#1B6EF3" }} />}
                       {m.home_name}
                     </p>
-                    <span className="text-[10px]" style={{ color: "#334155" }}>
+                    <span className="text-[10px]" style={{ color: "#94A3B8" }}>
                       {new Date(m.created_at).toLocaleDateString()}
                     </span>
                   </div>
-                  {m.subject && <p className="text-xs font-medium mb-0.5" style={{ color: "#94A3B8" }}>{m.subject}</p>}
-                  <p className="text-xs line-clamp-2" style={{ color: "#475569" }}>{m.body}</p>
-                  <p className="text-[10px] mt-1" style={{ color: "#334155" }}>From: {m.from_name}</p>
+                  {m.subject && <p className="text-xs font-medium mb-0.5" style={{ color: "#475569" }}>{m.subject}</p>}
+                  <p className="text-xs line-clamp-2" style={{ color: "#64748B" }}>{m.body}</p>
+                  <p className="text-[10px] mt-1" style={{ color: "#94A3B8" }}>From: {m.from_name}</p>
                 </div>
               ))}
             </div>

@@ -10,15 +10,15 @@ import ManagerDashboard from "./ManagerDashboard";
 function LoadingState() {
   return (
     <div className="max-w-6xl mx-auto space-y-5">
-      <div className="h-8 w-48 rounded-lg animate-pulse" style={{ background: "#161B22" }} />
+      <div className="h-8 w-48 rounded-lg animate-pulse bg-slate-100 border border-slate-200" />
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[1,2,3,4,5].map(i => (
-          <div key={i} className="h-24 rounded-xl animate-pulse" style={{ background: "#161B22" }} />
+          <div key={i} className="h-24 rounded-xl animate-pulse bg-slate-100 border border-slate-200" />
         ))}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {[1,2,3].map(i => (
-          <div key={i} className="h-56 rounded-xl animate-pulse" style={{ background: "#161B22" }} />
+          <div key={i} className="h-56 rounded-xl animate-pulse bg-slate-100 border border-slate-200" />
         ))}
       </div>
     </div>

@@ -1,11 +1,9 @@
 "use client";
-// Manager Dashboard — daily ops view, same NeuroBank visual language
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   Users, FlaskConical, CheckSquare, Moon, ChevronRight,
-  CheckCircle, MessageCircle, AlertTriangle, XCircle, ArrowUpRight, Shield,
-  ClipboardList,
+  CheckCircle, MessageCircle, XCircle, Shield, ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
 import { useProfile } from "@/components/auth/UserProvider";
@@ -25,28 +23,35 @@ function sobrietyDays(date: string | null) {
 }
 
 function FlagDot({ flag }: { flag: string }) {
-  const color = flag === "Red" ? "#EF4444" : flag === "Yellow" ? "#EAB308" : "#22C55E";
+  const color = flag === "Red" ? "#DC2626" : flag === "Yellow" ? "#D97706" : "#16A34A";
   return <div className="flag-dot flex-shrink-0" style={{ background: color }} />;
 }
 
+const FLAG_STATUS_STYLE: Record<string, { bg: string; color: string }> = {
+  Active:     { bg: "#DCFCE7", color: "#15803D" },
+  "On Pass":  { bg: "#DBEAFE", color: "#1D4ED8" },
+  Discharged: { bg: "#F1F5F9", color: "#475569" },
+};
+
 export default function ManagerDashboard() {
   const { profile } = useProfile();
-  const homeId = profile?.home_id;
+  const homeId    = profile?.home_id;
   const firstName = profile?.full_name?.split(" ")[0] ?? "Manager";
 
-  const [homeName, setHomeName] = useState("");
-  const [residents, setResidents] = useState<Resident[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [drugTestsDue, setDrugTestsDue] = useState(0);
-  const [choresOverdue, setChoresOverdue] = useState(0);
+  const [homeName,         setHomeName]         = useState("");
+  const [residents,        setResidents]        = useState<Resident[]>([]);
+  const [messages,         setMessages]         = useState<Message[]>([]);
+  const [drugTestsDue,     setDrugTestsDue]     = useState(0);
+  const [choresOverdue,    setChoresOverdue]    = useState(0);
   const [nightlySubmitted, setNightlySubmitted] = useState(false);
-  const [tasksPending, setTasksPending] = useState(0);
-  const [assignedTasks, setAssignedTasks] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [tasksPending,     setTasksPending]     = useState(0);
+  const [assignedTasks,    setAssignedTasks]    = useState(0);
+  const [loading,          setLoading]          = useState(true);
 
   const todayDisplay = new Date().toLocaleDateString("en-US", {
-    weekday: "long", month: "long", day: "numeric"
+    weekday: "long", month: "long", day: "numeric",
   }).toUpperCase();
+
   const hour = new Date().getHours();
   const showNightlyBanner = hour >= 20 && !nightlySubmitted;
 
@@ -71,7 +76,6 @@ export default function ManagerDashboard() {
     setResidents(sorted as Resident[]);
     const active = (resData ?? []).filter(r => (r as Resident).status === "Active");
 
-    // Drug tests this week
     const now = new Date();
     const d = now.getDay();
     const monday = new Date(now);
@@ -85,14 +89,12 @@ export default function ManagerDashboard() {
     }
     setDrugTestsDue(due);
 
-    // Chores overdue
     const today = now.toISOString().split("T")[0];
     const { count } = await supabase.from("chores").select("id", { count: "exact", head: true })
       .in("resident_id", active.map(r => r.id))
       .eq("status", "Pending").lte("due_date", today);
     setChoresOverdue(count ?? 0);
 
-    // Nightly
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
     try {
       const { data: n } = await supabase.from("nightly_reports").select("id")
@@ -100,7 +102,6 @@ export default function ManagerDashboard() {
       setNightlySubmitted(!!n);
     } catch {}
 
-    // Messages
     try {
       const { data: msgs } = await supabase.from("messages")
         .select("id, from_name, subject, body, is_read, created_at")
@@ -113,7 +114,6 @@ export default function ManagerDashboard() {
       })) as Message[]);
     } catch {}
 
-    // Tasks pending for this home
     try {
       const todayStr = new Date().toISOString().split("T")[0];
       const { data: taskData } = await supabase.from("tasks")
@@ -122,21 +122,15 @@ export default function ManagerDashboard() {
       if (taskData) {
         let pending = 0, assigned = 0;
         for (const t of taskData) {
-          const isRec = t.is_recurring as boolean;
-          const status = t.status as string;
-          const last = t.last_completed_at as string | null;
+          const isRec   = t.is_recurring as boolean;
+          const status  = t.status as string;
+          const last    = t.last_completed_at as string | null;
           const recType = t.recurrence_type as string | null;
-          const taskType = (t.task_type as string) ?? "standard";
+          const ttype   = (t.task_type as string) ?? "standard";
           let isDue = false;
-          if (taskType !== "standard") {
-            isDue = !last || last.split("T")[0] < todayStr;
-          } else if (isRec) {
-            if (!last) isDue = true;
-            else if (recType === "daily") isDue = last.split("T")[0] < todayStr;
-            else isDue = false;
-          } else {
-            isDue = status !== "Done";
-          }
+          if (ttype !== "standard")       isDue = !last || last.split("T")[0] < todayStr;
+          else if (isRec)                 isDue = !last ? true : recType === "daily" ? last.split("T")[0] < todayStr : false;
+          else                            isDue = status !== "Done";
           if (isDue) pending++;
           if (t.assigned_by) assigned++;
         }
@@ -151,12 +145,12 @@ export default function ManagerDashboard() {
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto space-y-4 fade-in">
-        <div className="h-16 rounded-2xl animate-pulse" style={{ background: "#0F1523" }} />
+        <div className="h-12 rounded-xl animate-pulse bg-slate-100 border border-slate-200" />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[1,2,3,4].map(i => <div key={i} className="h-28 rounded-2xl animate-pulse" style={{ background: "#0F1523" }} />)}
+          {[1,2,3,4].map(i => <div key={i} className="h-28 rounded-xl animate-pulse bg-slate-100 border border-slate-200" />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {[1,2].map(i => <div key={i} className="h-64 rounded-2xl animate-pulse" style={{ background: "#0F1523" }} />)}
+          {[1,2].map(i => <div key={i} className="h-64 rounded-xl animate-pulse bg-slate-100 border border-slate-200" />)}
         </div>
       </div>
     );
@@ -167,154 +161,111 @@ export default function ManagerDashboard() {
   return (
     <div className="max-w-6xl mx-auto fade-in">
 
-      {/* ── Top Bar ──────────────────────────────────────────────────────────── */}
+      {/* Top bar */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
-          style={{ background: "#0F1523", border: "1px solid rgba(255,255,255,0.06)" }}>
-          <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#3B82F6" }} />
-          <span className="text-xs font-semibold" style={{ color: "#94A3B8" }}>{homeName}</span>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 shadow-sm">
+          <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+          <span className="text-xs font-semibold text-slate-600">{homeName}</span>
         </div>
-        <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: "#334155" }}>
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
           {todayDisplay}
         </span>
       </div>
 
-      {/* ── Nightly Banner ───────────────────────────────────────────────────── */}
+      {/* Nightly banner */}
       {showNightlyBanner && (
-        <Link href="/nightly" className="flex items-center justify-between px-4 py-3 rounded-xl mb-4 fade-in"
-          style={{ background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.2)" }}>
+        <Link href="/nightly"
+          className="flex items-center justify-between px-4 py-3 rounded-xl mb-4 fade-in bg-amber-50 border border-amber-200">
           <div className="flex items-center gap-3">
-            <Moon size={15} style={{ color: "#EAB308" }} strokeWidth={2} />
+            <Moon size={15} className="text-amber-500" strokeWidth={2} />
             <div>
-              <p className="text-sm font-semibold" style={{ color: "#EAB308" }}>Nightly report not submitted</p>
-              <p className="text-xs" style={{ color: "#475569" }}>Tap to complete tonight&apos;s report</p>
+              <p className="text-sm font-semibold text-amber-700">Nightly report not submitted</p>
+              <p className="text-xs text-amber-500">Tap to complete tonight&apos;s report</p>
             </div>
           </div>
-          <ChevronRight size={14} style={{ color: "#475569" }} />
+          <ChevronRight size={14} className="text-amber-400" />
         </Link>
       )}
 
       {nightlySubmitted && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-4 fade-in"
-          style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
-          <CheckCircle size={14} style={{ color: "#22C55E" }} strokeWidth={2.5} />
-          <p className="text-sm font-semibold" style={{ color: "#22C55E" }}>Nightly report submitted</p>
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-4 fade-in bg-green-50 border border-green-200">
+          <CheckCircle size={14} className="text-green-500" strokeWidth={2.5} />
+          <p className="text-sm font-semibold text-green-700">Nightly report submitted</p>
         </div>
       )}
 
-      {/* ── Checklist Cards ───────────────────────────────────────────────────── */}
+      {/* Checklist stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
         {[
-          {
-            label: "Tests Due",
-            value: drugTestsDue,
-            icon: FlaskConical,
-            href: `/homes/${homeId}`,
-            ok: drugTestsDue === 0,
-            alertColor: "#EAB308",
-          },
-          {
-            label: "Chores Overdue",
-            value: choresOverdue,
-            icon: CheckSquare,
-            href: `/homes/${homeId}`,
-            ok: choresOverdue === 0,
-            alertColor: "#EF4444",
-          },
-          {
-            label: "Nightly",
-            value: nightlySubmitted ? "Done" : "Pending",
-            icon: nightlySubmitted ? CheckCircle : Moon,
-            href: "/nightly",
-            ok: nightlySubmitted,
-            alertColor: "#EAB308",
-            isText: true,
-          },
-          {
-            label: "Tasks",
-            value: tasksPending === 0 ? "All Done" : tasksPending,
-            icon: ClipboardList,
-            href: "/tasks",
-            ok: tasksPending === 0,
-            alertColor: "#60A5FA",
-            isText: tasksPending === 0,
-          },
-        ].map((card) => (
-          <Link key={card.label} href={card.href}
-            className="dash-card p-4 flex flex-col">
-            <div className="flex items-start justify-between mb-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ background: card.ok ? "rgba(34,197,94,0.1)" : `${card.alertColor}18` }}>
-                <card.icon size={15} strokeWidth={2}
-                  style={{ color: card.ok ? "#22C55E" : card.alertColor }} />
+          { label: "Tests Due",      value: drugTestsDue,    icon: FlaskConical,  href: `/homes/${homeId}`, ok: drugTestsDue === 0,    accentOk: "#16A34A", accent: "#D97706" },
+          { label: "Chores Overdue", value: choresOverdue,   icon: CheckSquare,   href: `/homes/${homeId}`, ok: choresOverdue === 0,   accentOk: "#16A34A", accent: "#DC2626" },
+          { label: "Nightly",        value: nightlySubmitted ? "Done" : "Pending", icon: nightlySubmitted ? CheckCircle : Moon, href: "/nightly", ok: nightlySubmitted, accentOk: "#16A34A", accent: "#D97706", isText: true },
+          { label: "Tasks",          value: tasksPending === 0 ? "All Done" : tasksPending, icon: ClipboardList, href: "/tasks", ok: tasksPending === 0, accentOk: "#16A34A", accent: "#1B6EF3", isText: tasksPending === 0 },
+        ].map(card => {
+          const color = card.ok ? card.accentOk : card.accent;
+          const iconBg = card.ok ? "#DCFCE7" : card.label === "Tasks" && !card.ok ? "#DBEAFE" : card.label === "Tests Due" ? "#FEF3C7" : "#FEE2E2";
+          return (
+            <Link key={card.label} href={card.href} className="dash-card p-4 flex flex-col">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: iconBg }}>
+                  <card.icon size={15} strokeWidth={2} style={{ color }} />
+                </div>
+                {card.label === "Tasks" && assignedTasks > 0 && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full pill-blue">
+                    {assignedTasks} assigned
+                  </span>
+                )}
               </div>
-              {card.label === "Tasks" && assignedTasks > 0 && (
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                  style={{ background: "rgba(59,130,246,0.15)", color: "#60A5FA" }}>
-                  {assignedTasks} assigned
-                </span>
-              )}
-            </div>
-            <p className="text-xl font-bold"
-              style={{ color: card.ok ? "#22C55E" : card.alertColor }}>
-              {card.isText ? card.value : card.value}
-            </p>
-            <p className="text-xs font-medium mt-0.5" style={{ color: "#475569" }}>{card.label}</p>
-          </Link>
-        ))}
+              <p className="text-xl font-bold" style={{ color }}>{card.value}</p>
+              <p className="text-xs font-medium mt-0.5 text-slate-400">{card.label}</p>
+            </Link>
+          );
+        })}
       </div>
 
-      {/* ── Main Grid ─────────────────────────────────────────────────────────── */}
+      {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
 
-        {/* Residents (3 cols wide) */}
-        <div className="dash-card lg:col-span-3 flex flex-col">
-          <div className="flex items-center justify-between px-5 py-4"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        {/* Residents list */}
+        <div className="dash-card lg:col-span-3 flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <Users size={13} style={{ color: "#475569" }} strokeWidth={2} />
+              <Users size={13} className="text-slate-400" strokeWidth={2} />
               <p className="card-label">Residents</p>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                style={{ background: "rgba(255,255,255,0.06)", color: "#94A3B8" }}>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-400">
                 {residents.length}
               </span>
             </div>
             <Link href={homeId ? `/homes/${homeId}` : "/homes"}
-              className="text-[10px] font-semibold" style={{ color: "#3B82F6" }}>
+              className="text-[10px] font-semibold text-blue-500">
               Full view
             </Link>
           </div>
-          <div className="flex-1 overflow-y-auto divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
             {residents.length === 0 ? (
               <div className="px-5 py-10 text-center">
-                <p className="text-sm" style={{ color: "#334155" }}>No residents yet</p>
+                <p className="text-sm text-slate-400">No residents yet</p>
               </div>
             ) : (
               residents.slice(0, 10).map(r => {
-                const days = sobrietyDays(r.sobriety_date);
+                const days  = sobrietyDays(r.sobriety_date);
+                const sSty  = FLAG_STATUS_STYLE[r.status] ?? FLAG_STATUS_STYLE.Discharged;
                 return (
                   <Link key={r.id}
                     href={homeId ? `/homes/${homeId}/residents/${r.id}` : "#"}
-                    className="flex items-center gap-3 px-5 py-3 row-hover">
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition-colors">
                     <FlagDot flag={r.flag} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate" style={{ color: "#F1F5F9" }}>
-                        {r.full_name}
-                      </p>
-                      <p className="text-[11px]" style={{ color: "#334155" }}>
+                      <p className="text-[13px] font-semibold text-slate-800 truncate">{r.full_name}</p>
+                      <p className="text-[11px] text-slate-400">
                         {days !== null ? `${days}d sober` : "No sobriety date"}
                       </p>
                     </div>
-                    <span className="status-badge flex-shrink-0"
-                      style={{
-                        background: r.status === "Active" ? "rgba(34,197,94,0.1)"
-                          : r.status === "On Pass" ? "rgba(59,130,246,0.1)" : "rgba(255,255,255,0.05)",
-                        color: r.status === "Active" ? "#22C55E"
-                          : r.status === "On Pass" ? "#60A5FA" : "#475569",
-                      }}>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                      style={{ background: sSty.bg, color: sSty.color }}>
                       {r.status}
                     </span>
-                    <ChevronRight size={12} style={{ color: "#1E293B" }} />
+                    <ChevronRight size={12} className="text-slate-300 flex-shrink-0" />
                   </Link>
                 );
               })
@@ -322,63 +273,52 @@ export default function ManagerDashboard() {
           </div>
         </div>
 
-        {/* Right column: Messages + Open Flags */}
+        {/* Right column */}
         <div className="lg:col-span-2 flex flex-col gap-4">
 
           {/* Messages */}
-          <div className="dash-card flex flex-col flex-1">
-            <div className="flex items-center justify-between px-5 py-4"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+          <div className="dash-card flex flex-col flex-1 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <MessageCircle size={13} style={{ color: "#475569" }} strokeWidth={2} />
+                <MessageCircle size={13} className="text-slate-400" strokeWidth={2} />
                 <p className="card-label">Messages</p>
                 {messages.length > 0 && (
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                    style={{ background: "#3B82F6", color: "white" }}>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500 text-white">
                     {messages.length}
                   </span>
                 )}
               </div>
-              <Link href="/messages" className="text-[10px] font-semibold" style={{ color: "#3B82F6" }}>
-                Inbox
-              </Link>
+              <Link href="/messages" className="text-[10px] font-semibold text-blue-500">Inbox</Link>
             </div>
             {messages.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center px-5 py-8">
-                <MessageCircle size={20} style={{ color: "#1E293B" }} strokeWidth={1.5} />
-                <p className="text-xs mt-2" style={{ color: "#334155" }}>No unread messages</p>
+                <MessageCircle size={20} className="text-slate-200 mb-2" strokeWidth={1.5} />
+                <p className="text-xs text-slate-400">No unread messages</p>
               </div>
             ) : (
-              <div className="divide-y flex-1" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
+              <div className="divide-y divide-slate-100 flex-1">
                 {messages.map(msg => (
                   <Link key={msg.id} href="/messages"
-                    className="flex items-start gap-3 px-4 py-3 row-hover"
-                    style={msg.is_from_owner ? { borderLeft: "2px solid #EAB308" } : { borderLeft: "2px solid transparent" }}>
+                    className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
+                    style={msg.is_from_owner ? { borderLeft: "3px solid #D97706" } : { borderLeft: "3px solid transparent" }}
+                  >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="text-xs font-semibold" style={{ color: "#F1F5F9" }}>
-                          {msg.from_name}
-                        </span>
+                        <span className="text-xs font-semibold text-slate-800">{msg.from_name}</span>
                         {msg.is_from_owner && (
-                          <span className="text-[9px] font-bold px-1 py-0.5 rounded"
-                            style={{ background: "rgba(234,179,8,0.15)", color: "#EAB308" }}>
-                            OWNER
-                          </span>
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded pill-warning">OWNER</span>
                         )}
                       </div>
-                      <p className="text-[11px] truncate font-medium" style={{ color: "#64748B" }}>
-                        {msg.subject}
-                      </p>
+                      <p className="text-[11px] text-slate-400 truncate font-medium">{msg.subject}</p>
                     </div>
-                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1"
-                      style={{ background: "#3B82F6" }} />
+                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5 bg-blue-500" />
                   </Link>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Open Flags — gradient card if there are any */}
+          {/* Flags card */}
           {openFlags.length > 0 ? (
             <div className="gradient-card p-5">
               <div className="flex items-center gap-2 mb-3">
@@ -391,21 +331,24 @@ export default function ManagerDashboard() {
               <div className="space-y-1.5">
                 {openFlags.slice(0, 3).map(r => (
                   <Link key={r.id} href={homeId ? `/homes/${homeId}/residents/${r.id}` : "#"}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg row-hover"
-                    style={{ background: "rgba(0,0,0,0.2)" }}>
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors"
+                    style={{ background: "rgba(0,0,0,0.2)" }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.3)"}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.2)"}
+                  >
                     <FlagDot flag={r.flag} />
                     <span className="text-xs font-semibold" style={{ color: "#F1F5F9" }}>{r.full_name}</span>
-                    <ChevronRight size={11} style={{ color: "#334155" }} className="ml-auto" />
+                    <ChevronRight size={11} style={{ color: "#64748B" }} className="ml-auto" />
                   </Link>
                 ))}
               </div>
             </div>
           ) : (
             <div className="dash-card p-5 flex items-center gap-3">
-              <CheckCircle size={18} style={{ color: "#22C55E" }} strokeWidth={1.5} />
+              <CheckCircle size={18} className="text-green-500" strokeWidth={1.5} />
               <div>
-                <p className="text-sm font-semibold" style={{ color: "#22C55E" }}>All clear</p>
-                <p className="text-xs" style={{ color: "#334155" }}>No flagged residents</p>
+                <p className="text-sm font-semibold text-green-600">All clear</p>
+                <p className="text-xs text-slate-400">No flagged residents</p>
               </div>
             </div>
           )}

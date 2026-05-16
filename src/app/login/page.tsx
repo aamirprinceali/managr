@@ -44,7 +44,7 @@ export default function LoginPage() {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: "#080F1E" }}
+      style={{ background: "#F0F2F5" }}
     >
       <div className="w-full max-w-sm">
 
@@ -52,26 +52,26 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-8">
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: "linear-gradient(135deg, #3B82F6, #1D4ED8)" }}
+            style={{ background: "linear-gradient(135deg, #1B6EF3, #1452C8)" }}
           >
             <Shield size={26} className="text-white" strokeWidth={2.5} />
           </div>
-          <h1 className="text-white text-2xl font-bold tracking-tight">Managr</h1>
-          <p className="text-sm mt-1" style={{ color: "#4A6380" }}>Recovery Housing Operations</p>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#0F172A" }}>Managr</h1>
+          <p className="text-sm mt-1" style={{ color: "#64748B" }}>Recovery Housing Operations</p>
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl p-6" style={{ background: "#161B27", border: "1px solid #1E2535" }}>
+        <div className="rounded-2xl p-6 bg-white border border-slate-200 shadow-sm">
           {/* Mode toggle */}
-          <div className="flex rounded-xl p-1 mb-6" style={{ background: "#111827" }}>
+          <div className="flex rounded-xl p-1 mb-6 bg-slate-100 border border-slate-200">
             {(["signin", "signup"] as const).map(m => (
               <button
                 key={m}
                 onClick={() => { setMode(m); setError(""); }}
                 className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-150"
                 style={mode === m
-                  ? { background: "#1E2D45", color: "#E6EDF3", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }
-                  : { color: "#4A6380" }
+                  ? { background: "#FFFFFF", color: "#0F172A", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }
+                  : { color: "#94A3B8" }
                 }
               >
                 {m === "signin" ? "Sign In" : "Create Account"}
@@ -119,7 +119,7 @@ export default function LoginPage() {
 
             {error && (
               <p className="text-sm rounded-lg px-3 py-2"
-                style={{ color: "#EF4444", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                style={{ color: "#DC2626", background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.15)" }}>
                 {error}
               </p>
             )}
@@ -128,7 +128,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               className="w-full font-bold py-3"
-              style={{ background: "#3B82F6", color: "white" }}
+              style={{ background: "#1B6EF3", color: "white" }}
             >
               {loading
                 ? "Please wait..."
@@ -137,13 +137,13 @@ export default function LoginPage() {
           </form>
 
           {mode === "signup" && (
-            <p className="text-xs text-center mt-4" style={{ color: "#4A6380" }}>
+            <p className="text-xs text-center mt-4" style={{ color: "#64748B" }}>
               The first account created becomes the owner account.
             </p>
           )}
         </div>
 
-        <p className="text-center text-xs mt-4" style={{ color: "#2A3448" }}>
+        <p className="text-center text-xs mt-4" style={{ color: "#CBD5E1" }}>
           Managr · Recovery Housing Management
         </p>
       </div>

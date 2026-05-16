@@ -6,7 +6,7 @@ import {
   CheckSquare, Plus, Check, Trash2, AlertTriangle,
   ChevronDown, ChevronRight, FlaskConical, Moon, Sun,
   Clock, Repeat, Building2, User, Bell, ClipboardList,
-  CheckCheck, ArrowRight, Users, UserCheck, Circle,
+  CheckCheck, ArrowRight, Users, UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+// ─── Types ──────────────────────────────────────────────────────────────────────
 
 type TaskType = "standard" | "group_morning_meds" | "group_night_meds" | "group_drug_test";
 
@@ -48,7 +48,7 @@ type Resident = { id: string; full_name: string; home_id: string };
 type MedRecord = { resident_id: string; frequency: string | null };
 type GroupCompletion = { task_id: string; resident_id: string };
 
-// ─── Constants ─────────────────────────────────────────────────────────────────
+// ─── Constants ──────────────────────────────────────────────────────────────────
 
 const MORNING_TERMS = ["morning", " am", "daily", "twice", "bid", "qd", "every day", "breakfast"];
 const NIGHT_TERMS   = ["night", "nightly", "evening", " pm", "daily", "twice", "bid", "qd", "bedtime", "hs", "dinner"];
@@ -58,21 +58,21 @@ const CATEGORIES  = ["House Operations", "Medications", "Drug Test", "Nightly Re
 const RECUR_OPTS  = [{ value: "daily", label: "Daily" }, { value: "weekly", label: "Weekly" }, { value: "monthly", label: "Monthly" }];
 const TABS        = ["Today", "All", "Assigned", "Recurring"];
 
-const TYPE_META: Record<TaskType, { label: string; icon: React.ElementType; color: string; bg: string; desc: string }> = {
-  standard:           { label: "Custom Task",       icon: ClipboardList, color: "#60A5FA", bg: "rgba(59,130,246,0.12)",  desc: "Any task, reminder, or to-do" },
-  group_morning_meds: { label: "Morning Meds",      icon: Sun,            color: "#FCD34D", bg: "rgba(245,158,11,0.12)",  desc: "Check off AM meds per resident" },
-  group_night_meds:   { label: "Night Meds",        icon: Moon,           color: "#C084FC", bg: "rgba(168,85,247,0.12)",  desc: "Check off PM meds per resident" },
-  group_drug_test:    { label: "Drug Test Round",   icon: FlaskConical,  color: "#F472B6", bg: "rgba(236,72,153,0.12)",  desc: "Track tests across all residents" },
+const TYPE_META: Record<TaskType, { label: string; icon: React.ElementType; color: string; lightBg: string; desc: string }> = {
+  standard:           { label: "Custom Task",     icon: ClipboardList, color: "#1B6EF3", lightBg: "#DBEAFE", desc: "Any task, reminder, or to-do" },
+  group_morning_meds: { label: "Morning Meds",    icon: Sun,           color: "#D97706", lightBg: "#FEF3C7", desc: "Check off AM meds per resident" },
+  group_night_meds:   { label: "Night Meds",      icon: Moon,          color: "#7C3AED", lightBg: "#EDE9FE", desc: "Check off PM meds per resident" },
+  group_drug_test:    { label: "Drug Test Round", icon: FlaskConical,  color: "#DB2777", lightBg: "#FCE7F3", desc: "Track tests across all residents" },
 };
 
-const PRIORITY_STYLE: Record<string, { color: string; bg: string }> = {
-  Urgent: { color: "#F87171", bg: "rgba(239,68,68,0.15)" },
-  High:   { color: "#FCD34D", bg: "rgba(245,158,11,0.15)" },
-  Medium: { color: "#60A5FA", bg: "rgba(59,130,246,0.15)" },
-  Low:    { color: "#94A3B8", bg: "rgba(100,116,139,0.12)" },
+const PRIORITY_STYLE: Record<string, { color: string; bg: string; border: string }> = {
+  Urgent: { color: "#B91C1C", bg: "#FEE2E2", border: "#FCA5A5" },
+  High:   { color: "#92400E", bg: "#FEF3C7", border: "#FDE68A" },
+  Medium: { color: "#1D4ED8", bg: "#DBEAFE", border: "#93C5FD" },
+  Low:    { color: "#475569", bg: "#F1F5F9", border: "#CBD5E1" },
 };
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────────
 
 function getMonday(d: Date) {
   const day = d.getDay();
@@ -125,7 +125,7 @@ function getDisplayCat(t: Task, today: string): DisplayCat {
   return "upcoming";
 }
 
-// ─── Page ──────────────────────────────────────────────────────────────────────
+// ─── Page ────────────────────────────────────────────────────────────────────────
 
 export default function TasksPage() {
   const { profile } = useProfile();
@@ -166,12 +166,8 @@ export default function TasksPage() {
         supabase.from("task_group_completions").select("task_id, resident_id").eq("completed_date", today),
       ]);
 
-      if (taskRes.error) {
-        setTableExists(false); setLoading(false); return;
-      }
-      if (compRes.error?.code === "42P01") {
-        setNeedsUpgrade(true); setLoading(false); return;
-      }
+      if (taskRes.error) { setTableExists(false); setLoading(false); return; }
+      if (compRes.error?.code === "42P01") { setNeedsUpgrade(true); setLoading(false); return; }
 
       const homeList: Home[] = homeRes.data ?? [];
       const homeMap: Record<string, string> = {};
@@ -181,18 +177,17 @@ export default function TasksPage() {
       setResidents(resRes.data ?? []);
       setMeds(medRes.data ?? []);
       setCompletions(compRes.data ?? []);
-
       setTasks(
         (taskRes.data ?? []).map((t: Record<string, unknown>) => ({
           ...t,
-          task_type:            (t.task_type as TaskType)          ?? "standard",
-          category:             (t.category as string)             ?? "General",
-          is_recurring:         (t.is_recurring as boolean)        ?? false,
-          recurrence_type:      (t.recurrence_type as string)      ?? null,
-          last_completed_at:    (t.last_completed_at as string)    ?? null,
-          assigned_to_manager:  (t.assigned_to_manager as string)  ?? null,
-          assigned_by:          (t.assigned_by as string)          ?? null,
-          reminder_time:        (t.reminder_time as string)        ?? null,
+          task_type:           (t.task_type as TaskType)         ?? "standard",
+          category:            (t.category as string)            ?? "General",
+          is_recurring:        (t.is_recurring as boolean)       ?? false,
+          recurrence_type:     (t.recurrence_type as string)     ?? null,
+          last_completed_at:   (t.last_completed_at as string)   ?? null,
+          assigned_to_manager: (t.assigned_to_manager as string) ?? null,
+          assigned_by:         (t.assigned_by as string)         ?? null,
+          reminder_time:       (t.reminder_time as string)       ?? null,
           home_name: t.home_id ? (homeMap[t.home_id as string] ?? null) : null,
         } as Task))
       );
@@ -202,7 +197,6 @@ export default function TasksPage() {
     }
   }
 
-  // Returns residents that belong to a group task (based on home + meds/drug test)
   function groupResidents(task: Task): Resident[] {
     const pool = task.home_id ? residents.filter(r => r.home_id === task.home_id) : residents;
     if (task.task_type === "group_drug_test") return pool;
@@ -216,9 +210,7 @@ export default function TasksPage() {
     });
   }
 
-  function completedCount(taskId: string) {
-    return completions.filter(c => c.task_id === taskId).length;
-  }
+  function completedCount(taskId: string) { return completions.filter(c => c.task_id === taskId).length; }
   function isComplete(taskId: string, residentId: string) {
     return completions.some(c => c.task_id === taskId && c.resident_id === residentId);
   }
@@ -297,7 +289,7 @@ export default function TasksPage() {
       assigned_to_manager: "", home_id: "", is_recurring: false, recurrence_type: "daily", reminder_time: "" });
   }
 
-  // ── Filtered / sectioned data ────────────────────────────────────────────────
+  // ── Filtered / sectioned data ──────────────────────────────────────────────────
 
   const filtered = useMemo(() => tasks.filter(t => {
     if (filterHome !== "All" && t.home_id !== filterHome) return false;
@@ -327,64 +319,61 @@ export default function TasksPage() {
   const overdueCount = sections.overdue.length;
   const grpPending   = groupTasks.filter(t => completedCount(t.id) < groupResidents(t).length).length;
 
-  // ── Error states ─────────────────────────────────────────────────────────────
+  // ── Error states ──────────────────────────────────────────────────────────────
 
   if (!tableExists) return (
-    <UpgradePrompt
-      title="Tasks table not found"
-      body="Run Block 2 in the setup page to create the tasks table."
-    />
+    <UpgradePrompt title="Tasks table not found" body="Run Block 2 in the setup page to create the tasks table." />
   );
   if (needsUpgrade) return (
-    <UpgradePrompt
-      title="Tasks need an upgrade"
-      body="Run Block 6 in the setup page to unlock group tasks, assignments, and reminders."
-    />
+    <UpgradePrompt title="Tasks need an upgrade" body="Run Block 6 in the setup page to unlock group tasks, assignments, and reminders." />
   );
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5 pb-12">
+    <div className="max-w-3xl mx-auto space-y-5 pb-12 fade-in">
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight" style={{ color: "#F1F5F9" }}>Tasks</h1>
-          <div className="flex items-center gap-2.5 mt-1.5 flex-wrap">
+          <h1 className="page-title">Tasks</h1>
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {pendingStd > 0 && (
-              <span className="text-xs" style={{ color: "#475569" }}>
-                {pendingStd} pending
-              </span>
+              <span className="text-xs text-slate-500">{pendingStd} pending</span>
             )}
             {overdueCount > 0 && (
-              <BadgePill color="#F87171" bg="rgba(239,68,68,0.1)">
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full pill-danger">
                 <Clock size={9} /> {overdueCount} overdue
-              </BadgePill>
+              </span>
             )}
             {grpPending > 0 && (
-              <BadgePill color="#C084FC" bg="rgba(168,85,247,0.1)">
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full pill-blue">
                 <Users size={9} /> {grpPending} group{grpPending !== 1 ? "s" : ""} in progress
-              </BadgePill>
+              </span>
             )}
           </div>
         </div>
         <Button
           onClick={() => { setAddStep(1); setAddOpen(true); }}
-          className="gap-2 font-semibold text-sm h-9 px-4 flex-shrink-0"
-          style={{ background: "#3B82F6", color: "white" }}
+          className="gap-2 font-semibold text-sm h-9 px-4 flex-shrink-0 shadow-sm"
+          style={{ background: "#1B6EF3", color: "white" }}
         >
           <Plus size={14} strokeWidth={2.5} /> New Task
         </Button>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex items-center gap-1 p-1 rounded-xl" style={{ background: "#0F1523" }}>
+      {/* Tab bar — Apple-style pill tabs */}
+      <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
         {TABS.map(tab => (
           <button
-            key={tab} onClick={() => setActiveTab(tab)}
-            className="flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-150"
-            style={activeTab === tab ? { background: "#131929", color: "#F1F5F9" } : { color: "#334155" }}
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className="flex-1 py-1.5 rounded-lg text-sm font-medium transition-all duration-150"
+            style={
+              activeTab === tab
+                ? { background: "#FFFFFF", color: "#0F172A", boxShadow: "0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)" }
+                : { color: "#64748B" }
+            }
           >
             {tab}
           </button>
@@ -394,9 +383,9 @@ export default function TasksPage() {
       {/* Home filter */}
       {homes.length > 1 && (
         <select
-          value={filterHome} onChange={e => setFilterHome(e.target.value)}
-          className="text-xs font-medium rounded-lg px-3 py-2 outline-none"
-          style={{ background: "#0F1523", border: "1px solid rgba(255,255,255,0.06)", color: "#94A3B8" }}
+          value={filterHome}
+          onChange={e => setFilterHome(e.target.value)}
+          className="text-xs font-medium rounded-lg px-3 py-2 outline-none border border-slate-200 bg-white text-slate-600"
         >
           <option value="All">All Homes</option>
           {homes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
@@ -409,12 +398,12 @@ export default function TasksPage() {
       ) : filtered.length === 0 ? (
         <EmptyState onAdd={() => { setAddStep(1); setAddOpen(true); }} />
       ) : (
-        <div className="space-y-7">
+        <div className="space-y-6">
 
           {/* Group tasks */}
           {groupTasks.length > 0 && (
             <div className="space-y-2.5">
-              <SectionLabel label="Group Tasks" count={groupTasks.length} color="#A78BFA" />
+              <SectionLabel label="Group Checklists" count={groupTasks.length} accent="#7C3AED" />
               {groupTasks.map(task => (
                 <GroupTaskCard
                   key={task.id}
@@ -434,39 +423,35 @@ export default function TasksPage() {
 
           {/* Standard task sections */}
           {sections.overdue.length > 0 && (
-            <TaskSection label="Overdue" color="#F87171" tasks={sections.overdue}
+            <TaskSection label="Overdue" accent="#DC2626" tasks={sections.overdue}
               today={today} onDone={markStandardDone} onDelete={deleteTask} dimmed={false} />
           )}
           {sections.today.length > 0 && (
-            <TaskSection label="Due Today" color="#3B82F6" tasks={sections.today}
+            <TaskSection label="Due Today" accent="#1B6EF3" tasks={sections.today}
               today={today} onDone={markStandardDone} onDelete={deleteTask} dimmed={false} />
           )}
           {sections.upcoming.length > 0 && (
-            <TaskSection label="Upcoming" color="#94A3B8" tasks={sections.upcoming}
+            <TaskSection label="Upcoming" accent="#64748B" tasks={sections.upcoming}
               today={today} onDone={markStandardDone} onDelete={deleteTask} dimmed={false} />
           )}
           {sections.done.length > 0 && (
-            <TaskSection label="Completed" color="#4ADE80" tasks={sections.done}
+            <TaskSection label="Completed" accent="#16A34A" tasks={sections.done}
               today={today} onDone={markStandardDone} onDelete={deleteTask} dimmed />
           )}
         </div>
       )}
 
       {/* Add Task Dialog */}
-      <Dialog
-        open={addOpen}
-        onOpenChange={o => { if (!o) resetDialog(); else setAddOpen(true); }}
-      >
-        <DialogContent className="sm:max-w-lg" style={{ background: "#0F1523", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <Dialog open={addOpen} onOpenChange={o => { if (!o) resetDialog(); else setAddOpen(true); }}>
+        <DialogContent className="sm:max-w-lg bg-white border border-slate-200 shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold" style={{ color: "#F1F5F9" }}>
+            <DialogTitle className="text-base font-bold text-slate-800" style={{ fontFamily: "var(--font-manrope, Manrope)" }}>
               {addStep === 1 ? "What kind of task?" : `New ${TYPE_META[selType].label}`}
             </DialogTitle>
           </DialogHeader>
 
           {addStep === 1 ? (
-            <TypePicker selected={selType} onSelect={setSelType}
-              onContinue={() => setAddStep(2)} onCancel={resetDialog} />
+            <TypePicker selected={selType} onSelect={setSelType} onContinue={() => setAddStep(2)} onCancel={resetDialog} />
           ) : (
             <form onSubmit={addTask} className="space-y-4 mt-1">
               {selType === "standard" ? (
@@ -476,15 +461,14 @@ export default function TasksPage() {
               )}
               <div className="flex gap-2.5 pt-1">
                 <Button type="button" variant="outline" onClick={() => setAddStep(1)}
-                  className="px-3 flex-shrink-0"
-                  style={{ borderColor: "rgba(255,255,255,0.08)", color: "#94A3B8", background: "transparent" }}>
+                  className="px-3 flex-shrink-0 border-slate-200 text-slate-600 hover:bg-slate-50">
                   ← Back
                 </Button>
-                <Button type="button" variant="outline" onClick={resetDialog} className="flex-1"
-                  style={{ borderColor: "rgba(255,255,255,0.08)", color: "#94A3B8", background: "transparent" }}>
+                <Button type="button" variant="outline" onClick={resetDialog}
+                  className="flex-1 border-slate-200 text-slate-600 hover:bg-slate-50">
                   Cancel
                 </Button>
-                <Button type="submit" className="flex-1 font-semibold" style={{ background: "#3B82F6", color: "white" }}>
+                <Button type="submit" className="flex-1 font-semibold" style={{ background: "#1B6EF3", color: "white" }}>
                   Create Task
                 </Button>
               </div>
@@ -496,29 +480,20 @@ export default function TasksPage() {
   );
 }
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
+// ─── Sub-components ─────────────────────────────────────────────────────────────
 
-function BadgePill({ color, bg, children }: { color: string; bg: string; children: React.ReactNode }) {
+function SectionLabel({ label, count, accent }: { label: string; count: number; accent: string }) {
   return (
-    <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full"
-      style={{ background: bg, color }}>
-      {children}
-    </span>
-  );
-}
-
-function SectionLabel({ label, count, color }: { label: string; count: number; color: string }) {
-  return (
-    <div className="flex items-center gap-2 px-1">
-      <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color }}>{label}</span>
-      <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full"
-        style={{ background: "rgba(255,255,255,0.05)", color: "#475569" }}>{count}</span>
-      <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.04)" }} />
+    <div className="flex items-center gap-3 mb-2">
+      <div className="w-0.5 h-4 rounded-full flex-shrink-0" style={{ background: accent }} />
+      <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{label}</span>
+      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-400">{count}</span>
+      <div className="flex-1 h-px bg-slate-100" />
     </div>
   );
 }
 
-// ── Group Task Card ─────────────────────────────────────────────────────────────
+// ── Group Task Card ───────────────────────────────────────────────────────────────
 
 function GroupTaskCard({
   task, residents, completedCount, isComplete,
@@ -537,91 +512,79 @@ function GroupTaskCard({
 
   return (
     <div
-      className="rounded-2xl overflow-hidden"
+      className="rounded-xl overflow-hidden bg-white transition-all duration-200"
       style={{
-        background: "#0F1523",
-        border: `1px solid ${allDone ? "rgba(74,222,128,0.18)" : "rgba(255,255,255,0.06)"}`,
-        transition: "border-color 0.3s ease",
+        border: `1px solid ${allDone ? "#86EFAC" : "#E2E8F0"}`,
+        boxShadow: allDone
+          ? "0 0 0 1px #86EFAC, 0 1px 3px rgba(0,0,0,0.04)"
+          : "0 1px 3px rgba(0,0,0,0.04)",
+        borderLeft: `4px solid ${meta.color}`,
       }}
     >
       {/* Header */}
       <button
         onClick={onToggleExpand}
-        className="w-full flex items-center gap-3.5 px-4 py-4 text-left transition-colors hover:bg-white/[0.018]"
+        className="w-full flex items-center gap-3.5 px-4 py-3.5 text-left hover:bg-slate-50 transition-colors"
       >
         {/* Icon */}
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: meta.bg }}>
-          <Icon size={17} style={{ color: meta.color }} />
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: meta.lightBg }}>
+          <Icon size={16} style={{ color: meta.color }} />
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0 space-y-1.5">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="text-sm font-semibold"
-              style={{ color: allDone ? "#4ADE80" : "#F1F5F9" }}>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-semibold" style={{ color: allDone ? "#15803D" : "#0F172A" }}>
               {task.title}
             </span>
             {task.assigned_by && (
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                style={{ background: "rgba(59,130,246,0.12)", color: "#60A5FA" }}>
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full pill-blue">
                 From {task.assigned_by}
               </span>
             )}
           </div>
 
-          {/* Progress bar + meta */}
+          {/* Progress */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-28 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${pct}%`,
-                    background: allDone ? "#4ADE80" : meta.color,
-                    transition: "width 0.4s ease",
-                  }}
-                />
-              </div>
-              <span className="text-xs font-semibold tabular-nums"
-                style={{ color: allDone ? "#4ADE80" : "#94A3B8" }}>
-                {completedCount}/{total}
-              </span>
+            <div className="w-28 h-1.5 rounded-full overflow-hidden bg-slate-100">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${pct}%`, background: allDone ? "#16A34A" : meta.color }}
+              />
             </div>
+            <span className="text-xs font-semibold tabular-nums text-slate-500">
+              {completedCount}/{total}
+            </span>
             {task.home_name && (
-              <span className="flex items-center gap-1 text-[11px]" style={{ color: "#334155" }}>
+              <span className="flex items-center gap-1 text-[11px] text-slate-400">
                 <Building2 size={9} />{task.home_name}
               </span>
             )}
-            <span className="text-[11px]" style={{ color: "#334155" }}>
-              {total} resident{total !== 1 ? "s" : ""}
-            </span>
           </div>
         </div>
 
-        {/* Right side */}
+        {/* Right */}
         <div className="flex items-center gap-2 flex-shrink-0">
           {allDone && (
-            <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-              style={{ background: "rgba(74,222,128,0.1)", color: "#4ADE80" }}>
-              <Check size={9} strokeWidth={3} />Done
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full pill-success">
+              <Check size={9} strokeWidth={3} /> Done
             </span>
           )}
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: expanded ? "rgba(255,255,255,0.05)" : "transparent" }}>
+          <div className="w-6 h-6 rounded-md flex items-center justify-center bg-slate-100">
             {expanded
-              ? <ChevronDown size={14} style={{ color: "#475569" }} />
-              : <ChevronRight size={14} style={{ color: "#334155" }} />}
+              ? <ChevronDown size={13} className="text-slate-400" />
+              : <ChevronRight size={13} className="text-slate-400" />}
           </div>
         </div>
       </button>
 
       {/* Expanded checklist */}
       {expanded && (
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        <div className="border-t border-slate-100">
           {total === 0 ? (
             <div className="px-4 py-6 text-center">
-              <p className="text-sm leading-relaxed" style={{ color: "#475569" }}>
+              <p className="text-sm text-slate-400 leading-relaxed">
                 No residents found for this task.
                 {task.task_type !== "group_drug_test" && (
                   <> Add medications in resident profiles with the correct frequency.</>
@@ -637,23 +600,23 @@ function GroupTaskCard({
                     <button
                       key={r.id}
                       onClick={() => onToggleResident(r.id)}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-white/[0.025]"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors"
                     >
                       <div
                         className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
                         style={{
-                          borderColor: done ? "#4ADE80" : "rgba(255,255,255,0.1)",
-                          background:  done ? "rgba(74,222,128,0.12)" : "transparent",
+                          borderColor: done ? "#16A34A" : "#CBD5E1",
+                          background:  done ? "#DCFCE7" : "transparent",
                         }}
                       >
-                        {done && <Check size={9} strokeWidth={3} style={{ color: "#4ADE80" }} />}
+                        {done && <Check size={9} strokeWidth={3} style={{ color: "#15803D" }} />}
                       </div>
                       <span className="text-sm flex-1 text-left font-medium"
-                        style={{ color: done ? "#475569" : "#CBD5E1" }}>
+                        style={{ color: done ? "#94A3B8" : "#334155", textDecoration: done ? "line-through" : "none" }}>
                         {r.full_name}
                       </span>
                       {done && (
-                        <span className="text-[10px] font-semibold" style={{ color: "#4ADE80" }}>✓</span>
+                        <span className="text-[10px] font-semibold text-green-600">✓</span>
                       )}
                     </button>
                   );
@@ -661,15 +624,11 @@ function GroupTaskCard({
               </div>
 
               {!allDone && (
-                <div className="px-3 py-3" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                <div className="px-3 py-3 border-t border-slate-100">
                   <button
                     onClick={onMarkAllDone}
-                    className="w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-opacity hover:opacity-85"
-                    style={{
-                      background: `${meta.color}18`,
-                      color: meta.color,
-                      border: `1px solid ${meta.color}30`,
-                    }}
+                    className="w-full py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-colors hover:opacity-90"
+                    style={{ background: meta.lightBg, color: meta.color, border: `1px solid ${meta.color}30` }}
                   >
                     <CheckCheck size={14} /> Mark All Done
                   </button>
@@ -678,13 +637,10 @@ function GroupTaskCard({
             </>
           )}
 
-          <div className="px-4 pb-3 flex justify-end">
+          <div className="px-4 py-2.5 border-t border-slate-100 flex justify-end">
             <button
               onClick={onDelete}
-              className="text-xs flex items-center gap-1.5 transition-colors"
-              style={{ color: "#1E293B" }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#F87171"}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#1E293B"}
+              className="text-xs flex items-center gap-1.5 text-slate-300 hover:text-red-500 transition-colors"
             >
               <Trash2 size={10} /> Remove task
             </button>
@@ -695,18 +651,23 @@ function GroupTaskCard({
   );
 }
 
-// ── Standard Task Section + Row ────────────────────────────────────────────────
+// ── Standard Task Section + Row ────────────────────────────────────────────────────
 
-function TaskSection({ label, color, tasks, today, onDone, onDelete, dimmed }: {
-  label: string; color: string; tasks: Task[]; today: string;
+function TaskSection({ label, accent, tasks, today, onDone, onDelete, dimmed }: {
+  label: string; accent: string; tasks: Task[]; today: string;
   onDone: (t: Task) => void; onDelete: (id: string) => void; dimmed: boolean;
 }) {
   return (
-    <div className="space-y-2">
-      <SectionLabel label={label} count={tasks.length} color={color} />
-      {tasks.map(t => (
-        <TaskRow key={t.id} task={t} today={today} onDone={onDone} onDelete={onDelete} dimmed={dimmed} />
-      ))}
+    <div className="space-y-1.5">
+      <SectionLabel label={label} count={tasks.length} accent={accent} />
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        {tasks.map((t, i) => (
+          <div key={t.id}>
+            <TaskRow task={t} today={today} onDone={onDone} onDelete={onDelete} dimmed={dimmed} />
+            {i < tasks.length - 1 && <div className="mx-4 h-px bg-slate-100" />}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -721,99 +682,91 @@ function TaskRow({ task: t, today, onDone, onDelete, dimmed }: {
 
   return (
     <div
-      className="flex items-center gap-3 rounded-xl px-4 py-3.5 group transition-colors"
+      className="flex items-center gap-3 px-4 py-3 group hover:bg-slate-50 transition-colors"
       style={{
-        background: isAssigned ? "rgba(59,130,246,0.035)" : "#0F1523",
-        border: `1px solid ${
-          isOverdue   ? "rgba(248,113,113,0.18)" :
-          isAssigned  ? "rgba(59,130,246,0.14)"  :
-          "rgba(255,255,255,0.05)"
-        }`,
-        opacity: dimmed && isDone ? 0.44 : 1,
+        opacity: dimmed && isDone ? 0.5 : 1,
+        background: isAssigned && !dimmed ? "#F0F7FF" : undefined,
       }}
     >
-      {/* Complete circle */}
+      {/* Checkbox */}
       <button
         onClick={() => !isDone && onDone(t)}
         disabled={isDone}
         className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
         style={{
-          borderColor: isDone ? "#4ADE80" : isOverdue ? "#F87171" : "rgba(255,255,255,0.12)",
-          background:  isDone ? "rgba(74,222,128,0.14)" : "transparent",
+          borderColor: isDone ? "#16A34A" : isOverdue ? "#DC2626" : "#CBD5E1",
+          background:  isDone ? "#DCFCE7" : "transparent",
         }}
       >
-        {isDone && <Check size={10} strokeWidth={3} style={{ color: "#4ADE80" }} />}
+        {isDone && <Check size={10} strokeWidth={3} style={{ color: "#15803D" }} />}
       </button>
 
-      {/* Text */}
+      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-medium"
+          <p className="text-[13px] font-medium"
             style={{
-              color: isDone ? "#475569" : "#F1F5F9",
+              color: isDone ? "#94A3B8" : "#0F172A",
               textDecoration: isDone && !t.is_recurring ? "line-through" : "none",
             }}>
             {t.title}
           </p>
           {isAssigned && (
-            <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
-              style={{ background: "rgba(59,130,246,0.12)", color: "#60A5FA" }}>
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full pill-blue flex-shrink-0">
               <UserCheck size={9} /> From {t.assigned_by}
             </span>
           )}
           {t.is_recurring && (
-            <span className="flex items-center gap-0.5 text-[10px] font-medium flex-shrink-0"
-              style={{ color: "#3B82F6" }}>
+            <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-blue-500 flex-shrink-0">
               <Repeat size={8} />{t.recurrence_type}
             </span>
           )}
         </div>
         <div className="flex items-center gap-3 mt-0.5 flex-wrap">
           {t.home_name && (
-            <span className="flex items-center gap-1 text-[11px]" style={{ color: "#334155" }}>
+            <span className="flex items-center gap-1 text-[11px] text-slate-400">
               <Building2 size={9} />{t.home_name}
             </span>
           )}
           {t.assigned_to_manager && (
-            <span className="flex items-center gap-1 text-[11px]" style={{ color: "#FCD34D" }}>
+            <span className="flex items-center gap-1 text-[11px] text-amber-600">
               <User size={9} />→ {t.assigned_to_manager}
             </span>
           )}
           {!t.is_recurring && t.due_date && (
             <span className="flex items-center gap-1 text-[11px] font-medium"
-              style={{ color: isOverdue ? "#F87171" : "#334155" }}>
+              style={{ color: isOverdue ? "#DC2626" : "#64748B" }}>
               <Clock size={9} />{formatDue(t.due_date, today)}
             </span>
           )}
           {t.reminder_time && (
-            <span className="flex items-center gap-1 text-[11px]" style={{ color: "#334155" }}>
+            <span className="flex items-center gap-1 text-[11px] text-slate-400">
               <Bell size={9} />{t.reminder_time}
             </span>
           )}
         </div>
       </div>
 
-      {/* Priority */}
-      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-        style={{ background: pStyle.bg, color: pStyle.color }}>
+      {/* Priority badge */}
+      <span
+        className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+        style={{ background: pStyle.bg, color: pStyle.color, border: `1px solid ${pStyle.border}` }}
+      >
         {t.priority}
       </span>
 
       {/* Delete */}
       <button
         onClick={() => onDelete(t.id)}
-        className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-        style={{ color: "#334155" }}
-        onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#F87171"}
-        onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#334155"}
+        className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all text-slate-300 hover:text-red-500 hover:bg-red-50"
       >
-        <Trash2 size={13} />
+        <Trash2 size={12} />
       </button>
     </div>
   );
 }
 
-// ── Dialog: Type Picker ─────────────────────────────────────────────────────────
+// ── Dialog: Type Picker ──────────────────────────────────────────────────────────
 
 function TypePicker({ selected, onSelect, onContinue, onCancel }: {
   selected: TaskType; onSelect: (t: TaskType) => void;
@@ -830,21 +783,21 @@ function TypePicker({ selected, onSelect, onContinue, onCancel }: {
           return (
             <button
               key={type} type="button" onClick={() => onSelect(type)}
-              className="flex flex-col items-start gap-2.5 p-4 rounded-2xl text-left transition-all"
+              className="flex flex-col items-start gap-2.5 p-4 rounded-xl text-left transition-all"
               style={{
-                background: sel ? `${meta.color}14` : "#131929",
-                border: `1.5px solid ${sel ? meta.color + "55" : "rgba(255,255,255,0.05)"}`,
+                background: sel ? meta.lightBg : "#F8FAFC",
+                border: `1.5px solid ${sel ? meta.color : "#E2E8F0"}`,
               }}
             >
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{ background: sel ? `${meta.color}22` : "rgba(255,255,255,0.05)" }}>
-                <Icon size={17} style={{ color: sel ? meta.color : "#475569" }} />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+                style={{ background: sel ? `${meta.color}20` : "#FFFFFF", border: `1px solid ${sel ? meta.color + "40" : "#E2E8F0"}` }}>
+                <Icon size={16} style={{ color: sel ? meta.color : "#94A3B8" }} />
               </div>
               <div>
-                <p className="text-sm font-semibold" style={{ color: sel ? "#F1F5F9" : "#94A3B8" }}>
+                <p className="text-sm font-semibold" style={{ color: sel ? "#0F172A" : "#64748B" }}>
                   {meta.label}
                 </p>
-                <p className="text-[11px] mt-0.5 leading-snug" style={{ color: sel ? "#64748B" : "#334155" }}>
+                <p className="text-[11px] mt-0.5 leading-snug text-slate-400">
                   {meta.desc}
                 </p>
               </div>
@@ -853,12 +806,12 @@ function TypePicker({ selected, onSelect, onContinue, onCancel }: {
         })}
       </div>
       <div className="flex gap-2.5">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1"
-          style={{ borderColor: "rgba(255,255,255,0.08)", color: "#94A3B8", background: "transparent" }}>
+        <Button type="button" variant="outline" onClick={onCancel}
+          className="flex-1 border-slate-200 text-slate-600 hover:bg-slate-50">
           Cancel
         </Button>
-        <Button type="button" onClick={onContinue} className="flex-1 font-semibold gap-1.5"
-          style={{ background: "#3B82F6", color: "white" }}>
+        <Button type="button" onClick={onContinue}
+          className="flex-1 font-semibold gap-1.5" style={{ background: "#1B6EF3", color: "white" }}>
           Continue <ArrowRight size={14} />
         </Button>
       </div>
@@ -866,7 +819,7 @@ function TypePicker({ selected, onSelect, onContinue, onCancel }: {
   );
 }
 
-// ── Dialog: Standard Task Form ──────────────────────────────────────────────────
+// ── Dialog: Standard Task Form ───────────────────────────────────────────────────
 
 type FormState = {
   title: string; description: string; due_date: string; priority: string;
@@ -878,29 +831,30 @@ function StandardForm({ form, setF, homes, isOwner }: {
   form: FormState; setF: (k: string, v: string | boolean) => void;
   homes: Home[]; isOwner: boolean;
 }) {
+  const inputStyle = { borderColor: "#E2E8F0", color: "#0F172A", background: "#FFFFFF" };
+  const selectStyle = "w-full rounded-md px-3 py-2 text-sm outline-none border border-slate-200 bg-white text-slate-700";
+
   return (
     <>
       <div className="space-y-1.5">
-        <Label style={{ color: "#94A3B8" }}>Title <span style={{ color: "#F87171" }}>*</span></Label>
+        <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Title <span className="text-red-400">*</span>
+        </Label>
         <Input value={form.title} onChange={e => setF("title", e.target.value)} required
           placeholder="e.g. Distribute evening medications"
-          style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#F1F5F9" }} />
+          style={inputStyle} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label style={{ color: "#94A3B8" }}>Category</Label>
-          <select value={form.category} onChange={e => setF("category", e.target.value)}
-            className="w-full rounded-md px-3 py-2 text-sm outline-none"
-            style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#94A3B8" }}>
+          <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Category</Label>
+          <select value={form.category} onChange={e => setF("category", e.target.value)} className={selectStyle}>
             {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
         <div className="space-y-1.5">
-          <Label style={{ color: "#94A3B8" }}>Priority</Label>
-          <select value={form.priority} onChange={e => setF("priority", e.target.value)}
-            className="w-full rounded-md px-3 py-2 text-sm outline-none"
-            style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#94A3B8" }}>
+          <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Priority</Label>
+          <select value={form.priority} onChange={e => setF("priority", e.target.value)} className={selectStyle}>
             {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
@@ -909,16 +863,13 @@ function StandardForm({ form, setF, homes, isOwner }: {
       {isOwner && (
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label style={{ color: "#94A3B8" }}>Assign to Manager</Label>
+            <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Assign to Manager</Label>
             <Input value={form.assigned_to_manager} onChange={e => setF("assigned_to_manager", e.target.value)}
-              placeholder="Manager name"
-              style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#F1F5F9" }} />
+              placeholder="Manager name" style={inputStyle} />
           </div>
           <div className="space-y-1.5">
-            <Label style={{ color: "#94A3B8" }}>Home</Label>
-            <select value={form.home_id} onChange={e => setF("home_id", e.target.value)}
-              className="w-full rounded-md px-3 py-2 text-sm outline-none"
-              style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#94A3B8" }}>
+            <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Home</Label>
+            <select value={form.home_id} onChange={e => setF("home_id", e.target.value)} className={selectStyle}>
               <option value="">All Homes</option>
               {homes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
             </select>
@@ -927,19 +878,19 @@ function StandardForm({ form, setF, homes, isOwner }: {
       )}
 
       {/* Recurring toggle */}
-      <div className="rounded-xl p-3.5 space-y-3" style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.05)" }}>
+      <div className="rounded-xl p-3.5 space-y-3 bg-slate-50 border border-slate-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Repeat size={13} style={{ color: "#60A5FA" }} />
-            <span className="text-sm font-medium" style={{ color: "#94A3B8" }}>Recurring</span>
+            <Repeat size={13} className="text-blue-500" />
+            <span className="text-sm font-medium text-slate-700">Recurring</span>
           </div>
           <button
             type="button"
             onClick={() => setF("is_recurring", !form.is_recurring)}
             className="w-9 h-5 rounded-full relative transition-colors"
-            style={{ background: form.is_recurring ? "#3B82F6" : "#1E293B" }}
+            style={{ background: form.is_recurring ? "#1B6EF3" : "#CBD5E1" }}
           >
-            <span className="absolute top-0.5 rounded-full w-4 h-4 bg-white transition-all"
+            <span className="absolute top-0.5 rounded-full w-4 h-4 bg-white shadow-sm transition-all"
               style={{ left: form.is_recurring ? "19px" : "2px" }} />
           </button>
         </div>
@@ -949,8 +900,8 @@ function StandardForm({ form, setF, homes, isOwner }: {
               <button key={o.value} type="button" onClick={() => setF("recurrence_type", o.value)}
                 className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                 style={form.recurrence_type === o.value
-                  ? { background: "#3B82F6", color: "white" }
-                  : { background: "#0F1523", color: "#475569" }}>
+                  ? { background: "#1B6EF3", color: "white" }
+                  : { background: "#FFFFFF", color: "#64748B", border: "1px solid #E2E8F0" }}>
                 {o.label}
               </button>
             ))}
@@ -961,29 +912,30 @@ function StandardForm({ form, setF, homes, isOwner }: {
       {!form.is_recurring && (
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label style={{ color: "#94A3B8" }}>Due Date</Label>
+            <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Due Date</Label>
             <Input type="date" value={form.due_date} onChange={e => setF("due_date", e.target.value)}
-              style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#94A3B8" }} />
+              style={inputStyle} />
           </div>
           <div className="space-y-1.5">
-            <Label style={{ color: "#94A3B8" }}>Reminder Time</Label>
+            <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Reminder</Label>
             <Input type="time" value={form.reminder_time} onChange={e => setF("reminder_time", e.target.value)}
-              style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#94A3B8" }} />
+              style={inputStyle} />
           </div>
         </div>
       )}
 
       <div className="space-y-1.5">
-        <Label style={{ color: "#94A3B8" }}>Notes <span className="opacity-40">(optional)</span></Label>
+        <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Notes <span className="text-slate-300 font-normal normal-case">(optional)</span>
+        </Label>
         <Textarea value={form.description} onChange={e => setF("description", e.target.value)} rows={2}
-          placeholder="Additional details..."
-          style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#F1F5F9" }} />
+          placeholder="Additional details..." style={inputStyle} />
       </div>
     </>
   );
 }
 
-// ── Dialog: Group Task Form ─────────────────────────────────────────────────────
+// ── Dialog: Group Task Form ──────────────────────────────────────────────────────
 
 function GroupForm({ form, setF, homes, taskType }: {
   form: FormState; setF: (k: string, v: string | boolean) => void;
@@ -993,15 +945,14 @@ function GroupForm({ form, setF, homes, taskType }: {
   const Icon = meta.icon;
   return (
     <>
-      {/* Info banner */}
-      <div className="flex items-start gap-3 p-3.5 rounded-xl" style={{ background: meta.bg }}>
+      <div className="flex items-start gap-3 p-3.5 rounded-xl" style={{ background: meta.lightBg, border: `1px solid ${meta.color}25` }}>
         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: `${meta.color}22` }}>
+          style={{ background: "#FFFFFF", border: `1px solid ${meta.color}30` }}>
           <Icon size={15} style={{ color: meta.color }} />
         </div>
         <div>
-          <p className="text-sm font-semibold" style={{ color: "#F1F5F9" }}>{meta.label}</p>
-          <p className="text-xs mt-0.5 leading-snug" style={{ color: "#64748B" }}>
+          <p className="text-sm font-semibold text-slate-800">{meta.label}</p>
+          <p className="text-xs mt-0.5 leading-snug text-slate-500">
             {taskType === "group_drug_test"
               ? "Auto-loads all active residents. Check them off as each test is done."
               : "Auto-loads residents based on medication frequency in their profile. Resets daily."}
@@ -1010,48 +961,44 @@ function GroupForm({ form, setF, homes, taskType }: {
       </div>
 
       <div className="space-y-1.5">
-        <Label style={{ color: "#94A3B8" }}>Which home?</Label>
+        <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Which home?</Label>
         <select value={form.home_id} onChange={e => setF("home_id", e.target.value)}
-          className="w-full rounded-md px-3 py-2 text-sm outline-none"
-          style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#94A3B8" }}>
+          className="w-full rounded-md px-3 py-2 text-sm outline-none border border-slate-200 bg-white text-slate-700">
           <option value="">All Homes</option>
           {homes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
         </select>
       </div>
 
       <div className="space-y-1.5">
-        <Label style={{ color: "#94A3B8" }}>Notes <span className="opacity-40">(optional)</span></Label>
+        <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          Notes <span className="text-slate-300 font-normal normal-case">(optional)</span>
+        </Label>
         <Textarea value={form.description} onChange={e => setF("description", e.target.value)} rows={2}
           placeholder="e.g. Use blister packs, double-check dosages..."
-          style={{ background: "#131929", border: "1px solid rgba(255,255,255,0.08)", color: "#F1F5F9" }} />
+          style={{ borderColor: "#E2E8F0", color: "#0F172A", background: "#FFFFFF" }} />
       </div>
 
-      <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg"
-        style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.12)" }}>
-        <Repeat size={12} style={{ color: "#60A5FA" }} />
-        <p className="text-xs" style={{ color: "#64748B" }}>This task automatically repeats daily and resets each morning.</p>
+      <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-blue-50 border border-blue-100">
+        <Repeat size={12} className="text-blue-500 flex-shrink-0" />
+        <p className="text-xs text-blue-600">This task automatically repeats daily and resets each morning.</p>
       </div>
     </>
   );
 }
 
-// ── Empty / Loading / Upgrade states ───────────────────────────────────────────
+// ── Empty / Loading / Upgrade states ────────────────────────────────────────────
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="rounded-2xl flex flex-col items-center justify-center py-20 text-center"
-      style={{ background: "#0F1523", border: "1px solid rgba(255,255,255,0.05)" }}>
-      <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
-        style={{ background: "#131929" }}>
-        <CheckSquare size={22} style={{ color: "#334155" }} />
+    <div className="bg-white border border-slate-200 rounded-xl flex flex-col items-center justify-center py-20 text-center shadow-sm">
+      <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-slate-100">
+        <CheckSquare size={22} className="text-slate-400" />
       </div>
-      <p className="font-semibold" style={{ color: "#F1F5F9" }}>No tasks yet</p>
-      <p className="text-sm mt-1 mb-5" style={{ color: "#334155" }}>
-        Add your first task or create a group checklist
-      </p>
+      <p className="font-semibold text-slate-700">No tasks yet</p>
+      <p className="text-sm mt-1 mb-5 text-slate-400">Add your first task or create a group checklist</p>
       <button onClick={onAdd}
-        className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition-opacity hover:opacity-80"
-        style={{ background: "#131929", color: "#60A5FA", border: "1px solid rgba(59,130,246,0.2)" }}>
+        className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg transition-colors hover:bg-blue-600"
+        style={{ background: "#1B6EF3", color: "white" }}>
         <Plus size={14} /> New Task
       </button>
     </div>
@@ -1062,7 +1009,7 @@ function LoadingSkeleton() {
   return (
     <div className="space-y-3">
       {[1, 2, 3, 4, 5].map(i => (
-        <div key={i} className="rounded-xl h-16 animate-pulse" style={{ background: "#0F1523" }} />
+        <div key={i} className="rounded-xl h-14 animate-pulse bg-slate-100 border border-slate-200" />
       ))}
     </div>
   );
@@ -1071,17 +1018,15 @@ function LoadingSkeleton() {
 function UpgradePrompt({ title, body }: { title: string; body: string }) {
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-xl font-semibold mb-4" style={{ color: "#F1F5F9" }}>Tasks</h1>
-      <div className="rounded-2xl p-8 text-center"
-        style={{ background: "#0F1523", border: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4"
-          style={{ background: "rgba(245,158,11,0.1)" }}>
-          <AlertTriangle size={22} style={{ color: "#FCD34D" }} />
+      <h1 className="page-title mb-4">Tasks</h1>
+      <div className="bg-white border border-slate-200 rounded-xl p-8 text-center shadow-sm">
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 bg-amber-50">
+          <AlertTriangle size={22} className="text-amber-500" />
         </div>
-        <h3 className="font-semibold text-base mb-2" style={{ color: "#F1F5F9" }}>{title}</h3>
-        <p className="text-sm mb-5" style={{ color: "#475569" }}>{body}</p>
+        <h3 className="font-semibold text-base mb-2 text-slate-800">{title}</h3>
+        <p className="text-sm mb-5 text-slate-500">{body}</p>
         <Link href="/seed">
-          <Button style={{ background: "#3B82F6", color: "white" }}>Go to Setup Page →</Button>
+          <Button style={{ background: "#1B6EF3", color: "white" }}>Go to Setup Page →</Button>
         </Link>
       </div>
     </div>

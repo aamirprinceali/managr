@@ -82,13 +82,13 @@ type Medication = {
 
 // ─── Helper: Status badge colors ─────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    Active: "bg-sky-100 text-sky-700",
-    "On Pass": "bg-yellow-100 text-yellow-700",
-    Discharged: "bg-gray-100 text-gray-600",
+  const pillClass: Record<string, string> = {
+    Active: "pill-blue",
+    "On Pass": "pill-warning",
+    Discharged: "pill-neutral",
   };
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${styles[status] ?? "bg-gray-100 text-gray-600"}`}>
+    <span className={`status-badge ${pillClass[status] ?? "pill-neutral"}`}>
       {status}
     </span>
   );
@@ -131,14 +131,14 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
 
 // ─── Helper: Drug test result badge ──────────────────────────────────────────
 function ResultBadge({ result }: { result: string }) {
-  const styles: Record<string, string> = {
-    Negative: "bg-green-100 text-green-700",
-    Positive: "bg-red-100 text-red-700",
-    Refused: "bg-yellow-100 text-yellow-700",
-    Inconclusive: "bg-gray-100 text-gray-600",
+  const pillClass: Record<string, string> = {
+    Negative: "pill-success",
+    Positive: "pill-danger",
+    Refused: "pill-warning",
+    Inconclusive: "pill-neutral",
   };
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${styles[result] ?? "bg-gray-100 text-gray-600"}`}>
+    <span className={`status-badge ${pillClass[result] ?? "pill-neutral"}`}>
       {result}
     </span>
   );
@@ -146,13 +146,13 @@ function ResultBadge({ result }: { result: string }) {
 
 // ─── Helper: Note type badge ──────────────────────────────────────────────────
 function NoteTypeBadge({ type }: { type: string }) {
-  const styles: Record<string, string> = {
-    Note: "bg-sky-100 text-sky-700",
-    Incident: "bg-red-100 text-red-700",
-    Relapse: "bg-orange-100 text-orange-700",
+  const pillClass: Record<string, string> = {
+    Note: "pill-blue",
+    Incident: "pill-danger",
+    Relapse: "pill-warning",
   };
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${styles[type] ?? "bg-gray-100 text-gray-600"}`}>
+    <span className={`status-badge ${pillClass[type] ?? "pill-neutral"}`}>
       {type}
     </span>
   );
@@ -478,29 +478,29 @@ export default function ResidentProfilePage() {
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto animate-pulse">
-        <div className="h-4 w-24 bg-gray-200 rounded mb-6" />
-        <div className="bg-white border border-gray-100 rounded-2xl p-6 mb-4">
-          <div className="h-8 w-48 bg-gray-200 rounded mb-3" />
+        <div className="h-4 w-24 rounded mb-6 bg-slate-200" />
+        <div className="rounded-2xl p-6 mb-4 bg-white border border-slate-200">
+          <div className="h-8 w-48 rounded mb-3 bg-slate-100" />
           <div className="flex gap-2 mb-4">
-            <div className="h-6 w-16 bg-gray-100 rounded-full" />
-            <div className="h-6 w-6 bg-gray-100 rounded-full" />
+            <div className="h-6 w-16 rounded-full bg-slate-100" />
+            <div className="h-6 w-6 rounded-full bg-slate-100" />
           </div>
-          <div className="h-6 w-32 bg-sky-50 rounded-full mb-4" />
+          <div className="h-6 w-32 rounded-full mb-4 bg-slate-100" />
           <div className="flex items-center gap-3 mb-4">
-            <div className="h-8 w-8 bg-gray-100 rounded-lg" />
-            <div className="h-8 w-12 bg-gray-200 rounded" />
-            <div className="h-8 w-8 bg-gray-100 rounded-lg" />
+            <div className="h-8 w-8 rounded-lg bg-slate-100" />
+            <div className="h-8 w-12 rounded bg-slate-100" />
+            <div className="h-8 w-8 rounded-lg bg-slate-100" />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {[1,2,3,4].map(i => <div key={i} className="h-12 bg-gray-100 rounded-lg" />)}
+            {[1,2,3,4].map(i => <div key={i} className="h-12 rounded-lg bg-slate-100" />)}
           </div>
         </div>
         <div className="flex gap-1 mb-4">
-          {[1,2,3,4,5].map(i => <div key={i} className="h-9 w-24 bg-gray-100 rounded-lg" />)}
+          {[1,2,3,4,5].map(i => <div key={i} className="h-9 w-24 rounded-lg bg-slate-200" />)}
         </div>
-        <div className="bg-white border border-gray-100 rounded-2xl p-6">
+        <div className="rounded-2xl p-6 bg-white border border-slate-200">
           <div className="space-y-3">
-            {[1,2,3].map(i => <div key={i} className="h-10 bg-gray-100 rounded-lg" />)}
+            {[1,2,3].map(i => <div key={i} className="h-10 rounded-lg bg-slate-100" />)}
           </div>
         </div>
       </div>
@@ -813,7 +813,7 @@ export default function ResidentProfilePage() {
                     >
                       {chore.title}
                     </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100" style={{ color: "#64748B" }}>
+                    <span className="status-badge pill-neutral">
                       {chore.cadence}
                     </span>
                   </div>

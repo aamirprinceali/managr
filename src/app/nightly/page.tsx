@@ -82,15 +82,25 @@ function ManagerForm({ homeId, homeName, onSubmitted }: {
     }
   }
 
+  const yesStyle = (active: boolean) => active
+    ? { background: "rgba(22,163,74,0.1)", color: "#16A34A", border: "1px solid rgba(22,163,74,0.25)" }
+    : { background: "#F1F5F9", color: "#94A3B8", border: "1px solid #E2E8F0" };
+
+  const noStyle = (active: boolean) => active
+    ? { background: "rgba(220,38,38,0.08)", color: "#DC2626", border: "1px solid rgba(220,38,38,0.2)" }
+    : { background: "#F1F5F9", color: "#94A3B8", border: "1px solid #E2E8F0" };
+
+  const textareaStyle = { background: "#FFFFFF", color: "#0F172A", border: "1px solid #E2E8F0" };
+
   return (
     <div className="max-w-xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
-          <Moon size={16} style={{ color: "#5BA4F5" }} strokeWidth={2} />
-          <span className="section-label" style={{ color: "#5BA4F5" }}>Nightly Report</span>
+          <Moon size={16} style={{ color: "#1B6EF3" }} strokeWidth={2} />
+          <span className="section-label" style={{ color: "#1B6EF3" }}>Nightly Report</span>
         </div>
-        <h1 className="text-xl font-semibold" style={{ color: "#E2E8F0" }}>
+        <h1 className="page-title">
           Tonight&apos;s Report
         </h1>
         <p className="text-sm mt-1" style={{ color: "#64748B" }}>
@@ -101,61 +111,57 @@ function ManagerForm({ homeId, homeName, onSubmitted }: {
       <form onSubmit={handleSubmit} className="space-y-4">
 
         {/* All residents accounted for */}
-        <div
-          className="rounded-xl p-4"
-          style={{ background: "#161B22", border: "1px solid #21262D" }}
-        >
+        <div className="rounded-xl p-4 bg-white border border-slate-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold" style={{ color: "#E2E8F0" }}>All residents accounted for?</p>
+              <p className="text-sm font-semibold" style={{ color: "#0F172A" }}>All residents accounted for?</p>
               <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>Everyone is present or on approved pass</p>
             </div>
             <div className="flex gap-2">
-              {[true, false].map(val => (
-                <button
-                  key={String(val)}
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, all_residents_accounted: val }))}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                  style={
-                    form.all_residents_accounted === val
-                      ? { background: val ? "rgba(46,160,67,0.15)" : "rgba(248,81,73,0.12)", color: val ? "#2EA043" : "#F85149", border: `1px solid ${val ? "rgba(46,160,67,0.3)" : "rgba(248,81,73,0.25)"}` }
-                      : { background: "#21262D", color: "#64748B", border: "1px solid transparent" }
-                  }
-                >
-                  {val ? "Yes" : "No"}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, all_residents_accounted: true }))}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                style={yesStyle(form.all_residents_accounted)}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, all_residents_accounted: false }))}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                style={noStyle(!form.all_residents_accounted)}
+              >
+                No
+              </button>
             </div>
           </div>
         </div>
 
         {/* Incidents tonight */}
-        <div
-          className="rounded-xl p-4 space-y-3"
-          style={{ background: "#161B22", border: "1px solid #21262D" }}
-        >
+        <div className="rounded-xl p-4 bg-white border border-slate-200 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold" style={{ color: "#E2E8F0" }}>Any incidents tonight?</p>
+              <p className="text-sm font-semibold" style={{ color: "#0F172A" }}>Any incidents tonight?</p>
               <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>Fights, violations, medical issues, etc.</p>
             </div>
             <div className="flex gap-2">
-              {[true, false].map(val => (
-                <button
-                  key={String(val)}
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, incidents_tonight: val }))}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                  style={
-                    form.incidents_tonight === val
-                      ? { background: val ? "rgba(248,81,73,0.12)" : "rgba(46,160,67,0.15)", color: val ? "#F85149" : "#2EA043", border: `1px solid ${val ? "rgba(248,81,73,0.25)" : "rgba(46,160,67,0.3)"}` }
-                      : { background: "#21262D", color: "#64748B", border: "1px solid transparent" }
-                  }
-                >
-                  {val ? "Yes" : "No"}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, incidents_tonight: true }))}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                style={noStyle(form.incidents_tonight)}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, incidents_tonight: false }))}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                style={yesStyle(!form.incidents_tonight)}
+              >
+                No
+              </button>
             </div>
           </div>
           {form.incidents_tonight && (
@@ -164,38 +170,36 @@ function ManagerForm({ homeId, homeName, onSubmitted }: {
               value={form.incident_notes}
               onChange={e => setForm(f => ({ ...f, incident_notes: e.target.value }))}
               rows={3}
-              className="w-full text-sm rounded-lg px-3 py-2 resize-none outline-none"
-              style={{ background: "#0E1117", color: "#E2E8F0", border: "1px solid #21262D" }}
+              className="w-full text-sm rounded-lg px-3 py-2 resize-none outline-none focus:ring-2 focus:ring-sky-200"
+              style={textareaStyle}
             />
           )}
         </div>
 
         {/* Medications given */}
-        <div
-          className="rounded-xl p-4 space-y-3"
-          style={{ background: "#161B22", border: "1px solid #21262D" }}
-        >
+        <div className="rounded-xl p-4 bg-white border border-slate-200 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold" style={{ color: "#E2E8F0" }}>Night medications given?</p>
+              <p className="text-sm font-semibold" style={{ color: "#0F172A" }}>Night medications given?</p>
               <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>All scheduled night meds administered</p>
             </div>
             <div className="flex gap-2">
-              {[true, false].map(val => (
-                <button
-                  key={String(val)}
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, medications_given: val }))}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                  style={
-                    form.medications_given === val
-                      ? { background: val ? "rgba(46,160,67,0.15)" : "rgba(248,81,73,0.12)", color: val ? "#2EA043" : "#F85149", border: `1px solid ${val ? "rgba(46,160,67,0.3)" : "rgba(248,81,73,0.25)"}` }
-                      : { background: "#21262D", color: "#64748B", border: "1px solid transparent" }
-                  }
-                >
-                  {val ? "Yes" : "No"}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, medications_given: true }))}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                style={yesStyle(form.medications_given)}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, medications_given: false }))}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                style={noStyle(!form.medications_given)}
+              >
+                No
+              </button>
             </div>
           </div>
           {!form.medications_given && (
@@ -204,38 +208,36 @@ function ManagerForm({ homeId, homeName, onSubmitted }: {
               value={form.medication_notes}
               onChange={e => setForm(f => ({ ...f, medication_notes: e.target.value }))}
               rows={2}
-              className="w-full text-sm rounded-lg px-3 py-2 resize-none outline-none"
-              style={{ background: "#0E1117", color: "#E2E8F0", border: "1px solid #21262D" }}
+              className="w-full text-sm rounded-lg px-3 py-2 resize-none outline-none focus:ring-2 focus:ring-sky-200"
+              style={textareaStyle}
             />
           )}
         </div>
 
         {/* Curfew violations */}
-        <div
-          className="rounded-xl p-4 space-y-3"
-          style={{ background: "#161B22", border: "1px solid #21262D" }}
-        >
+        <div className="rounded-xl p-4 bg-white border border-slate-200 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold" style={{ color: "#E2E8F0" }}>Any curfew violations?</p>
+              <p className="text-sm font-semibold" style={{ color: "#0F172A" }}>Any curfew violations?</p>
               <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>Late returns or unauthorized absences</p>
             </div>
             <div className="flex gap-2">
-              {[true, false].map(val => (
-                <button
-                  key={String(val)}
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, curfew_violations: val }))}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                  style={
-                    form.curfew_violations === val
-                      ? { background: val ? "rgba(248,81,73,0.12)" : "rgba(46,160,67,0.15)", color: val ? "#F85149" : "#2EA043", border: `1px solid ${val ? "rgba(248,81,73,0.25)" : "rgba(46,160,67,0.3)"}` }
-                      : { background: "#21262D", color: "#64748B", border: "1px solid transparent" }
-                  }
-                >
-                  {val ? "Yes" : "No"}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, curfew_violations: true }))}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                style={noStyle(form.curfew_violations)}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, curfew_violations: false }))}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                style={yesStyle(!form.curfew_violations)}
+              >
+                No
+              </button>
             </div>
           </div>
           {form.curfew_violations && (
@@ -244,35 +246,32 @@ function ManagerForm({ homeId, homeName, onSubmitted }: {
               value={form.curfew_notes}
               onChange={e => setForm(f => ({ ...f, curfew_notes: e.target.value }))}
               rows={2}
-              className="w-full text-sm rounded-lg px-3 py-2 resize-none outline-none"
-              style={{ background: "#0E1117", color: "#E2E8F0", border: "1px solid #21262D" }}
+              className="w-full text-sm rounded-lg px-3 py-2 resize-none outline-none focus:ring-2 focus:ring-sky-200"
+              style={textareaStyle}
             />
           )}
         </div>
 
         {/* General notes */}
-        <div
-          className="rounded-xl p-4"
-          style={{ background: "#161B22", border: "1px solid #21262D" }}
-        >
-          <p className="text-sm font-semibold mb-2" style={{ color: "#E2E8F0" }}>General notes</p>
+        <div className="rounded-xl p-4 bg-white border border-slate-200">
+          <p className="text-sm font-semibold mb-2" style={{ color: "#0F172A" }}>General notes</p>
           <textarea
             placeholder="Anything else worth noting tonight..."
             value={form.general_notes}
             onChange={e => setForm(f => ({ ...f, general_notes: e.target.value }))}
             rows={3}
-            className="w-full text-sm rounded-lg px-3 py-2 resize-none outline-none"
-            style={{ background: "#0E1117", color: "#E2E8F0", border: "1px solid #21262D" }}
+            className="w-full text-sm rounded-lg px-3 py-2 resize-none outline-none focus:ring-2 focus:ring-sky-200"
+            style={textareaStyle}
           />
         </div>
 
         {error && (
           <div
             className="flex items-center gap-2 rounded-lg px-3 py-2"
-            style={{ background: "rgba(248,81,73,0.1)", border: "1px solid rgba(248,81,73,0.2)" }}
+            style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)" }}
           >
-            <AlertCircle size={13} style={{ color: "#F85149" }} />
-            <p className="text-xs" style={{ color: "#F85149" }}>{error}</p>
+            <AlertCircle size={13} style={{ color: "#DC2626" }} />
+            <p className="text-xs" style={{ color: "#DC2626" }}>{error}</p>
           </div>
         )}
 
@@ -280,7 +279,7 @@ function ManagerForm({ homeId, homeName, onSubmitted }: {
           type="submit"
           disabled={submitting}
           className="w-full py-3 rounded-xl text-sm font-semibold transition-colors"
-          style={{ background: "#5BA4F5", color: "white", opacity: submitting ? 0.6 : 1 }}
+          style={{ background: "#1B6EF3", color: "white", opacity: submitting ? 0.6 : 1 }}
         >
           {submitting ? "Submitting..." : "Submit Nightly Report"}
         </button>
@@ -298,11 +297,11 @@ function AlreadySubmitted({ report }: { report: NightlyReport }) {
     <div className="max-w-xl mx-auto">
       {/* Success card */}
       <div
-        className="rounded-xl p-6 mb-4 text-center fade-in"
-        style={{ background: "#161B22", border: "1px solid rgba(46,160,67,0.25)" }}
+        className="rounded-xl p-6 mb-4 text-center fade-in bg-white border"
+        style={{ borderColor: "rgba(22,163,74,0.3)" }}
       >
-        <CheckCircle size={32} style={{ color: "#2EA043" }} strokeWidth={1.5} className="mx-auto mb-3" />
-        <p className="text-lg font-semibold" style={{ color: "#2EA043" }}>Nightly Report Submitted</p>
+        <CheckCircle size={32} style={{ color: "#16A34A" }} strokeWidth={1.5} className="mx-auto mb-3" />
+        <p className="text-lg font-semibold" style={{ color: "#16A34A" }}>Nightly Report Submitted</p>
         <p className="text-sm mt-1" style={{ color: "#64748B" }}>
           {new Date(report.submitted_at).toLocaleString("en-US", {
             weekday: "long", month: "long", day: "numeric",
@@ -314,20 +313,18 @@ function AlreadySubmitted({ report }: { report: NightlyReport }) {
       {/* View summary toggle */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors"
-        style={{ background: "#161B22", border: "1px solid #21262D" }}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-colors bg-white border border-slate-200 hover:bg-slate-50"
       >
         <div className="flex items-center gap-2">
           <FileText size={13} style={{ color: "#64748B" }} strokeWidth={2} />
-          <span className="text-sm font-semibold" style={{ color: "#E2E8F0" }}>View tonight&apos;s report</span>
+          <span className="text-sm font-semibold" style={{ color: "#0F172A" }}>View tonight&apos;s report</span>
         </div>
         {expanded ? <ChevronUp size={14} style={{ color: "#64748B" }} /> : <ChevronDown size={14} style={{ color: "#64748B" }} />}
       </button>
 
       {expanded && (
         <div
-          className="mt-2 rounded-xl divide-y fade-in"
-          style={{ background: "#161B22", border: "1px solid #21262D", borderColor: "#21262D" }}
+          className="mt-2 rounded-xl divide-y divide-slate-100 fade-in bg-white border border-slate-200"
         >
           {[
             { label: "All residents accounted for", value: report.all_residents_accounted, notes: null },
@@ -337,10 +334,10 @@ function AlreadySubmitted({ report }: { report: NightlyReport }) {
           ].map(item => (
             <div key={item.label} className="px-4 py-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium" style={{ color: "#94A3B8" }}>{item.label}</span>
+                <span className="text-xs font-medium" style={{ color: "#64748B" }}>{item.label}</span>
                 <span
                   className="text-xs font-semibold"
-                  style={{ color: item.value ? "#2EA043" : "#F85149" }}
+                  style={{ color: item.value ? "#16A34A" : "#DC2626" }}
                 >
                   {item.value ? "Yes" : "No"}
                 </span>
@@ -352,8 +349,8 @@ function AlreadySubmitted({ report }: { report: NightlyReport }) {
           ))}
           {report.general_notes && (
             <div className="px-4 py-3">
-              <p className="text-xs font-medium mb-1" style={{ color: "#94A3B8" }}>General notes</p>
-              <p className="text-xs" style={{ color: "#64748B" }}>{report.general_notes}</p>
+              <p className="text-xs font-medium mb-1" style={{ color: "#64748B" }}>General notes</p>
+              <p className="text-xs" style={{ color: "#475569" }}>{report.general_notes}</p>
             </div>
           )}
         </div>
@@ -406,7 +403,7 @@ function OwnerNightlyView() {
     return (
       <div className="max-w-2xl mx-auto space-y-3">
         {[1,2,3].map(i => (
-          <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: "#161B22" }} />
+          <div key={i} className="h-16 rounded-xl animate-pulse bg-slate-200" />
         ))}
       </div>
     );
@@ -419,14 +416,14 @@ function OwnerNightlyView() {
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
-          <Moon size={16} style={{ color: "#5BA4F5" }} strokeWidth={2} />
-          <span className="section-label" style={{ color: "#5BA4F5" }}>Tonight&apos;s Reports</span>
+          <Moon size={16} style={{ color: "#1B6EF3" }} strokeWidth={2} />
+          <span className="section-label" style={{ color: "#1B6EF3" }}>Tonight&apos;s Reports</span>
         </div>
-        <h1 className="text-xl font-semibold" style={{ color: "#E2E8F0" }}>Nightly Reports</h1>
+        <h1 className="page-title">Nightly Reports</h1>
         <p className="text-sm mt-1" style={{ color: "#64748B" }}>
           {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
           &nbsp;·&nbsp;{submitted}/{homes.length} submitted
-          {missing > 0 && <span style={{ color: "#F85149" }}> · {missing} missing</span>}
+          {missing > 0 && <span style={{ color: "#DC2626" }}> · {missing} missing</span>}
         </p>
       </div>
 
@@ -434,20 +431,20 @@ function OwnerNightlyView() {
         {homes.map(home => (
           <div
             key={home.id}
-            className="rounded-xl overflow-hidden"
-            style={{ background: "#161B22", border: `1px solid ${!home.submitted ? "rgba(248,81,73,0.15)" : "#21262D"}` }}
+            className="rounded-xl overflow-hidden bg-white"
+            style={{ border: `1px solid ${!home.submitted ? "rgba(220,38,38,0.2)" : "#E2E8F0"}` }}
           >
             <button
-              className="w-full flex items-center gap-3 px-4 py-3 text-left"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors"
               onClick={() => setExpanded(expanded === home.id ? null : home.id)}
               disabled={!home.submitted}
             >
               <Building2 size={14} style={{ color: "#64748B" }} strokeWidth={2} />
-              <span className="flex-1 text-sm font-semibold" style={{ color: "#E2E8F0" }}>{home.name}</span>
+              <span className="flex-1 text-sm font-semibold" style={{ color: "#0F172A" }}>{home.name}</span>
               {home.submitted ? (
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle size={13} style={{ color: "#2EA043" }} strokeWidth={2.5} />
-                  <span className="text-xs font-medium" style={{ color: "#2EA043" }}>Submitted</span>
+                  <CheckCircle size={13} style={{ color: "#16A34A" }} strokeWidth={2.5} />
+                  <span className="text-xs font-medium" style={{ color: "#16A34A" }}>Submitted</span>
                   {expanded === home.id ? (
                     <ChevronUp size={13} style={{ color: "#64748B" }} />
                   ) : (
@@ -456,8 +453,8 @@ function OwnerNightlyView() {
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5">
-                  <Clock size={13} style={{ color: "#F85149" }} strokeWidth={2} />
-                  <span className="text-xs font-medium" style={{ color: "#F85149" }}>Missing</span>
+                  <Clock size={13} style={{ color: "#DC2626" }} strokeWidth={2} />
+                  <span className="text-xs font-medium" style={{ color: "#DC2626" }}>Missing</span>
                 </div>
               )}
             </button>
@@ -465,8 +462,8 @@ function OwnerNightlyView() {
             {/* Expanded report detail */}
             {expanded === home.id && home.report && (
               <div
-                className="divide-y fade-in"
-                style={{ borderTop: "1px solid #21262D", borderColor: "#21262D" }}
+                className="divide-y divide-slate-100 fade-in"
+                style={{ borderTop: "1px solid #E2E8F0" }}
               >
                 {[
                   { label: "All residents accounted for", value: home.report.all_residents_accounted, notes: null },
@@ -476,12 +473,12 @@ function OwnerNightlyView() {
                 ].map(item => (
                   <div key={item.label} className="px-4 py-3 flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <p className="text-xs font-medium" style={{ color: "#94A3B8" }}>{item.label}</p>
+                      <p className="text-xs font-medium" style={{ color: "#64748B" }}>{item.label}</p>
                       {item.notes && <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>{item.notes}</p>}
                     </div>
                     <span
                       className="text-xs font-semibold flex-shrink-0"
-                      style={{ color: item.value ? "#2EA043" : "#F85149" }}
+                      style={{ color: item.value ? "#16A34A" : "#DC2626" }}
                     >
                       {item.value ? "Yes" : "No"}
                     </span>
@@ -489,12 +486,12 @@ function OwnerNightlyView() {
                 ))}
                 {home.report.general_notes && (
                   <div className="px-4 py-3">
-                    <p className="text-xs font-medium mb-0.5" style={{ color: "#94A3B8" }}>General notes</p>
-                    <p className="text-xs" style={{ color: "#64748B" }}>{home.report.general_notes}</p>
+                    <p className="text-xs font-medium mb-0.5" style={{ color: "#64748B" }}>General notes</p>
+                    <p className="text-xs" style={{ color: "#475569" }}>{home.report.general_notes}</p>
                   </div>
                 )}
                 <div className="px-4 py-2">
-                  <p className="text-[10px]" style={{ color: "#64748B" }}>
+                  <p className="text-[10px]" style={{ color: "#94A3B8" }}>
                     Submitted {new Date(home.report.submitted_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
                   </p>
                 </div>
@@ -552,7 +549,7 @@ function ManagerNightlyView() {
     return (
       <div className="max-w-xl mx-auto space-y-4">
         {[1,2,3,4].map(i => (
-          <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: "#161B22" }} />
+          <div key={i} className="h-20 rounded-xl animate-pulse bg-slate-200" />
         ))}
       </div>
     );
@@ -571,7 +568,7 @@ function NightlyPageContent() {
     return (
       <div className="max-w-xl mx-auto space-y-4">
         {[1,2,3].map(i => (
-          <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: "#161B22" }} />
+          <div key={i} className="h-20 rounded-xl animate-pulse bg-slate-200" />
         ))}
       </div>
     );
@@ -586,7 +583,7 @@ export default function NightlyPage() {
     <Suspense fallback={
       <div className="max-w-xl mx-auto space-y-4">
         {[1,2,3].map(i => (
-          <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: "#161B22" }} />
+          <div key={i} className="h-20 rounded-xl animate-pulse bg-slate-200" />
         ))}
       </div>
     }>
