@@ -1,9 +1,9 @@
 # Managr — Feature Status
 
-Last updated: 2026-04-23
+Last updated: 2026-05-16
 
 ## Legend
-- ✅ Built & styled (dark theme, complete UI)
+- ✅ Built & styled (light CRM theme, complete UI)
 - 🔧 Built — requires Supabase table to be seeded to show data
 - 🔨 Built but needs polish next session
 - 📋 Placeholder page — skeleton only
@@ -16,7 +16,7 @@ Last updated: 2026-04-23
 - ✅ Supabase Auth + middleware protecting all routes
 - ✅ UserProvider / useProfile() hook → profile.role
 - ✅ Role-based access: owner vs. manager
-- ✅ Dark theme design system (globals.css — NeuroBank palette)
+- ✅ Light CRM design system (globals.css — Salesforce/HubSpot + clinical aesthetic)
 - ✅ App shell: sidebar (desktop) + mobile bottom nav
 - ✅ Sidebar: all nav items, active states, homes sub-list (owner only)
 
